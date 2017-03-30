@@ -1,46 +1,19 @@
+.PHONY: all 
+#.SECONDARY:
 
-GCC=gcc
-GPP=g++
+ifneq ($(KERNELRELEASE),)
 
-FLAGS=-Wall -g -D DEBUG
-#FLAGS=-Wall -g
-GCCFLAGS=  -g
-CPPFLAGS= -D DEBUG
-LIB=
+obj-m := our_mod.o
 
-# User definitions must be here
-EXEC = Projet.x
-INCS =
-SOURCES = main.c
-OBJS = $(SOURCES:.c=.o)
+else
+  KERNELDIR ?= /tmp/linux-4.2.3-/
+  PWD := $(shell pwd)
 
+all :
+	$(info obj-m : $(obj-m))
+	make -C $(KERNELDIR) M=$(PWD) modules
 
-
-# Building the world
-all: $(EXEC) $(EXEC2)
-
-$(EXEC): $(INCS) $(OBJS)
-	$(GCC) $(GCCFLAGS) $(OBJS) $(LIBS) -o $(EXEC)
-
-
-.SUFFIXES:
-.SUFFIXES: .c .cc .o
-
-.cc.o:
-	$(GPP) $(FLAGS) -c $<
-
-.c.o:
-	$(GCC) $(FLAGS) -c $<
-
-
-# Clean up
 clean:
-	rm -f *~ .*~ \#*\# *.o
-	rm -f $(EXEC)
+	make -C $(KERNELDIR) M=$(PWD) clean
 
-# Dependencies
-.depend:
-	$(GCC) -M $(CPPFLAGS) $(SOURCES) > .depend
-
-
-include .depend
+endif
