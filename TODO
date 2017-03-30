@@ -1,0 +1,22 @@
+LE fichier pour savoir ce qu'on fait et pour marquer qui a fait quoi ou quoi :
+
+--> Le rapport en .rst ou .tex?
+
+--> Pour compiler :
+    $ touch .depend
+    $ make clean depend all
+
+
+--> rajouter partie malefile pour module
+--> ajouter notre module dans ?? avec le numero majeur et tout pour acceder
+    aux diferentes fonction de Fops par /fs/module... (comme dans le tp n ?)
+--> faire un fichier .h contenant les différentes valeurs d'appel de fonction
+    ioctl
+
+du coup faire les differentes fonctions qui correspondent au numéros dans
+device_ioctl
+
+regarder comment marche les workqueue aussi,
+  -> on s'en servira dans le module pour traiter chaque demande de l'ioctl
+
+le traitement de chaque truc est surement casse couille
