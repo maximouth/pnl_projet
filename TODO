@@ -4,7 +4,7 @@ LE fichier pour savoir ce qu'on fait et pour marquer qui a fait quoi ou quoi :
 
 --> Pour compiler :
     $ touch .depend
-    $ make clean depend all
+    $ make -f Makefile_mod/app clean depend all
 
 
 --> rajouter partie malefile pour module
