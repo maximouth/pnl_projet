@@ -24,16 +24,28 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
 
   case LIST_IO :
     pr_info ("into list ioctl");
+    break;
+
   case FG_IOR :
     pr_info ("into fg ioctl");
+    break;
+
   case KILL_IOR :
     pr_info ("into kill ioctl");
+    break;
+
   case WAIT_IOR :
     pr_info ("into wait ioctl");
+    break;
+
   case MEMINFO_IO :
     pr_info ("into meminfo ioctl");
+    break;
+
   case MODINFO_IOR :
     pr_info ("into modinfo ioctl");
+    break;
+
   default :
     pr_info ("ioctl function that does not exist");
   }
