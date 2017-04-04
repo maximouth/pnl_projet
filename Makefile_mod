@@ -6,7 +6,7 @@ ifneq ($(KERNELRELEASE),)
 obj-m := our_mod.o
 
 else
-  KERNELDIR ?= /tmp/linux-4.2.3-/
+  KERNELDIR ?= ./linux-4.2.3/
   PWD := $(shell pwd)
 
 all :

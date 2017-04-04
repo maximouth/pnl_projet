@@ -23,17 +23,17 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   switch (request) {
 
   case LIST_IO :
-
-  case FG_IO :
-
-  case KILL_IO :
-
-  case WAIT_IO :
-
+    pr_info ("into list ioctl");
+  case FG_IOR :
+    pr_info ("into fg ioctl");
+  case KILL_IOR :
+    pr_info ("into kill ioctl");
+  case WAIT_IOR :
+    pr_info ("into wait ioctl");
   case MEMINFO_IO :
-
-  case MODINFO_IO :
-
+    pr_info ("into meminfo ioctl");
+  case MODINFO_IOR :
+    pr_info ("into modinfo ioctl");
   default :
     pr_info ("ioctl function that does not exist");
   }
@@ -46,16 +46,18 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
 static struct file_operations fops_mod = {
   .unlocked_ioctl = device_ioctl
 };
+
 static int major;
+
 
 static int __init mon_module_init(void) {
 
   pr_info("Coucou toi..!\n");
   major = register_chrdev (0, "our_mod", &fops_mod);
-  /* ajout dans un fs avec numero maj et tout */
 
+  /* ajout dans un fs avec numero maj et tout */
   /* petit print de toutes nos variables et tout pour voir si tout va bien :)  */
-   return 0;
+  return 0;
 }
 
 

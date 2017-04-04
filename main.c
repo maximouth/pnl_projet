@@ -6,9 +6,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 
 /* our Include */
+#include "our_mod.h"
 
 int main (int argc, char ** argv) {
   /* file descriptor stdin */
@@ -23,6 +25,7 @@ int main (int argc, char ** argv) {
   char * command_arg[10];
   /* readding buf */
   char * read_buf = malloc (1 * sizeof (char));
+  unsigned long req = 0;
   
   if (argc != 2) {
     perror ("mauvaise utilisation\n./Projet.x \"chemin du module\"\n");
@@ -42,7 +45,7 @@ int main (int argc, char ** argv) {
   }
   
   /* open module to have acces to it */
-  if ( (module_fd = open (argv[1]     , O_RDWR )) < 0) {
+  if ( (module_fd = open (argv[1], O_RDWR)) < 0) {
       perror ("error open module");
       exit (1);
     }
@@ -57,6 +60,9 @@ int main (int argc, char ** argv) {
 
   while (1) {
 
+
+    
+    
     printf ("Veuillez entrer votre commande :\n");
     fflush (stdin);
 
@@ -118,7 +124,7 @@ int main (int argc, char ** argv) {
       while ( (read_buf[0] != '\n' ) ) {
 
 #ifdef DEBUG
-	printf ("lecture du while BUF : %c, i : %d\n", read_buf[0], i);
+	//	printf ("lecture du while BUF : %c, i : %d\n", read_buf[0], i);
 #endif	  
 	command_arg[y][i] = read_buf[0];
 	i++;
@@ -145,7 +151,7 @@ int main (int argc, char ** argv) {
 	       read_buf[0] != '\n'
 	       )  {
 #ifdef DEBUG
-	  printf ("lecture du while BUF : %c, i : %d\n", read_buf[0], i);
+	  //	  printf ("lecture du while BUF : %c, i : %d\n", read_buf[0], i);
 #endif	  
 	command_arg[y][i] = read_buf[0];
 	i++;
@@ -161,12 +167,34 @@ int main (int argc, char ** argv) {
       }
 
     }      
+
+    /*
+     * call the wright ioctl function
+     */
+    
+    if (strcmp (command, "fg") == 0 ) {
+      req = FG_IOR;
+    }
+    else if (strcmp (command, "kill") == 0 ) {
+      req = KILL_IOR;
+    }
+    else if (strcmp (command, "wait") == 0 ) {
+      req = WAIT_IOR;
+    }
+    else if (strcmp (command, "meminfo") == 0 ) {
+      req = MEMINFO_IO;
+    }
+    else if (strcmp (command, "modinfo") == 0 ) {
+      req = MODINFO_IOR;
+    }
+    else if (strcmp (command, "list") == 0 ) {
+      req = LIST_IO;
+    }
+    
+    ioctl (module_fd, req, command_arg);
+
   }
 
-  /*
-   * call the wright ioctl function
-   */
-  
   
   return 0;
 }
