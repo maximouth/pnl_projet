@@ -17,15 +17,31 @@ int main (int argc, char ** argv) {
   int stdin_fd;
   /* file descriptor for kernet module */
   int module_fd;
-  /* to store the command (length max 7 char see doc)*/
-  char * command = malloc (7 * sizeof (char));
   /* a counter */
   int i = 0, y = 0;
-  /* tab of arguments max 10  */
-  char * command_arg[10];
   /* readding buf */
   char * read_buf = malloc (1 * sizeof (char));
   unsigned long req = 0;
+  struct commande commande;
+
+  commande.nom = malloc (10 * sizeof (char));
+  for (i = 0 ; i < 10 ; i ++) {
+    commande.nom[i] = '\0';
+  }
+
+  commande.param = malloc (10 * sizeof (char));
+
+  for (i = 0 ; i < 8 ; i ++) {
+    commande.param[i] = malloc (10 * sizeof (char));
+	  
+    for (y = 0 ; y < 10 ; y ++) {
+      commande.param[i][y] = '\0'; 
+    }
+  }
+  
+  printf ("struct commande initialisée\n");
+  fflush (stdin);
+   
   
   if (argc != 2) {
     perror ("mauvaise utilisation\n./Projet.x \"chemin du module\"\n");
@@ -49,26 +65,17 @@ int main (int argc, char ** argv) {
       perror ("error open module");
       exit (1);
     }
-
-
-  /* get space for the argument */
-  for (i = 0 ; i < 10 ; i++) {
-    command_arg[i] = malloc (10 * sizeof (char));
-  }
   
   printf ("Bienvenu! \n");
 
   while (1) {
-
-
-    
     
     printf ("Veuillez entrer votre commande :\n");
     fflush (stdin);
 
-    for (i = 0 ; i < 6 ; i++) {
-      command[i] = '\0'; 
-    }
+  for (i = 0 ; i < 10 ; i ++) {
+    commande.nom[i] = '\0'; 
+  }
     
     /* starting the main program  */
     i = 0;
@@ -89,32 +96,34 @@ int main (int argc, char ** argv) {
 #ifdef DEBUG
       printf ("lecture du while BUF : %c, i : %d\n", read_buf[0], i);
 #endif	  
-      command[i] = read_buf[0];
+      commande.nom[i] = read_buf[0];
       i++;
       read (stdin_fd, read_buf, 1);
     }
 
 #ifdef DEBUG
-    printf ("read command : %s\n", command);
+    printf ("read command : %s\n", commande.nom);
     fflush (stdin);
 #endif
 
     /* gestion des arguments plus casse couille...  */
 
-    /* clear the arguments  */
-    for (y = 0 ; y < 6 ; y++) {
-      for (i = 0 ; i < 6 ; i++) {
-	    command_arg[y][i] = '\0'; 
-	  }
-    }    
+    //    clear the arguments
+    for (i = 0 ; i < 4 ; i ++) {
+      for (y = 0 ; y < 10 ; y ++) {
+    	commande.param[i][y] = '\0';
+	printf ("clear i %d ; y %d\n", i , y);
+	fflush (stdin);	
+      }
+    }
 
     /* get the command argument only if there are some needed *  
      * not for list or meminfo command                        *
      */
 
     /* only one for fg and modinfo  */
-    if ( strcmp (command, "fg") == 0 ||
-	 strcmp (command, "modinfo") == 0   ) {
+    if ( strcmp (commande.nom, "fg") == 0 ||
+	 strcmp (commande.nom, "modinfo") == 0   ) {
 
       y = 0;
       i = 0;
@@ -126,13 +135,13 @@ int main (int argc, char ** argv) {
 #ifdef DEBUG
 	//	printf ("lecture du while BUF : %c, i : %d\n", read_buf[0], i);
 #endif	  
-	command_arg[y][i] = read_buf[0];
+	commande.param[y][i] = read_buf[0];
 	i++;
 	read (stdin_fd, read_buf, 1);
       }
       
 #ifdef DEBUG
-      printf ("read command arg %d : %s\n", y, command_arg[y]);
+      printf ("read command arg %d : %s\n", y, commande.param[y]);
       fflush (stdin);
 #endif
     }
@@ -153,13 +162,13 @@ int main (int argc, char ** argv) {
 #ifdef DEBUG
 	  //	  printf ("lecture du while BUF : %c, i : %d\n", read_buf[0], i);
 #endif	  
-	command_arg[y][i] = read_buf[0];
+	commande.param[y][i] = read_buf[0];
 	i++;
 	read (stdin_fd, read_buf, 1);
       }
       
 #ifdef DEBUG
-      printf ("read command arg %d : %s\n", y, command_arg[y]);
+      printf ("read command arg %d : %s\n", y, commande.param[y]);
       fflush (stdin);
 #endif
       //      read (stdin_fd, read_buf, 1);
@@ -172,26 +181,26 @@ int main (int argc, char ** argv) {
      * call the wright ioctl function
      */
     
-    if (strcmp (command, "fg") == 0 ) {
+    if (strcmp (commande.nom, "fg") == 0 ) {
       req = FG_IOR;
     }
-    else if (strcmp (command, "kill") == 0 ) {
+    else if (strcmp (commande.nom, "kill") == 0 ) {
       req = KILL_IOR;
     }
-    else if (strcmp (command, "wait") == 0 ) {
+    else if (strcmp (commande.nom, "wait") == 0 ) {
       req = WAIT_IOR;
     }
-    else if (strcmp (command, "meminfo") == 0 ) {
+    else if (strcmp (commande.nom, "meminfo") == 0 ) {
       req = MEMINFO_IO;
     }
-    else if (strcmp (command, "modinfo") == 0 ) {
+    else if (strcmp (commande.nom, "modinfo") == 0 ) {
       req = MODINFO_IOR;
     }
-    else if (strcmp (command, "list") == 0 ) {
+    else if (strcmp (commande.nom, "list") == 0 ) {
       req = LIST_IO;
     }
     
-    ioctl (module_fd, req, command_arg);
+    ioctl (module_fd, req, &commande);
 
   }
 

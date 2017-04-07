@@ -20,3 +20,26 @@ regarder comment marche les workqueue aussi,
   -> on s'en servira dans le module pour traiter chaque demande de l'ioctl
 
 le traitement de chaque truc est surement casse couille
+
+*********************
+7/04/2017 :
+*********************
+
+tout changer pour que ca marcher avec des structures :
+voir our_mod.h pour la structure
+   -> contient un nom
+   -> un tableau de param
+   -> si c'est une commande asynchrone ou pas (pas encore implementé dans main.c
+
+si tu reussit à faire des kmalloc qui compilent pour commande_list.nom et param
+dans mon_module_init (our_mod.c)
+on a la fonction list qui marche :D (elle compile mais pas testé mais doit marcher normalement sauf bug pourrit que j'ai raté
+
+il faut rajouter un copy_to_user de la chaine de caractère retour dans ioctl pour que l'affichage se fasse coté user
+
+ET ALORS LA !
+SI jamais t'arrives à trouver d'ou vient un de mes bug de main.c
+RESTECP :p
+
+li 112 si je met un i plus grand que 4 seg fault alors que malloc 10...
+l 34 si je met un i plus grand que 8 seg fault alors que malloc 10...

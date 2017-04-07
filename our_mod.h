@@ -2,6 +2,13 @@
 #define _OUR_MOD_H
 
 
+struct commande {
+  char *nom;
+  char **param;
+  int asynchrone;
+};
+
+
 /* definition of number for ioctl request  */
 #define LIST_IO     10
 #define FG_IOR      11
