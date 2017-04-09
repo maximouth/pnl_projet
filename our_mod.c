@@ -31,6 +31,7 @@ static int cmd_cpt = 0;
 /* parcourrir les diffentes commandes utilisées  */
 static char * io_list (int max) {
   int i,y = 0;
+  // faire un kmalloc je pense pour pouvoir passer retour sans perte de donnée
   char retour[1024];
 
   for ( i = 0; i < max ; i ++) {
@@ -61,14 +62,17 @@ static char * io_list (int max) {
  * 
  **********************************************************************/
 long device_ioctl(struct file *filp, unsigned int request, unsigned long param) {
-  char * retour;
+  char *retour;
   struct commande* args = (struct commande *) param;
   struct commande args_cpy;
   int i = 0;
   
   /* copy_from_user */
   copy_from_user (&args_cpy, args, sizeof (struct commande));
-    
+  copy_from_user (&args_cpy.nom, args->nom, sizeof (args->nom));
+  copy_from_user (&args_cpy.param, args->param, sizeof (args->param));
+  
+  
   /* remplissage structure arg*/
   /*
    * parcourir les parametres recu en arg et faire des strcpy
@@ -127,9 +131,10 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
 
   /* return copy value to the user  */
 
-  
+  copy_to_user (args->retour, retour, strlen (retour));
   
   return 0;
+  
 }
 
 
