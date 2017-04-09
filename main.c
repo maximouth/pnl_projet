@@ -38,6 +38,11 @@ int main (int argc, char ** argv) {
       commande.param[i][y] = '\0'; 
     }
   }
+
+  commande.retour[0] = 'a';
+  commande.retour[1] = 'b';
+  commande.retour[2] = '\0';
+      
   
   printf ("struct commande initialisée\n");
   fflush (stdin);
@@ -201,7 +206,7 @@ int main (int argc, char ** argv) {
     }
     
     ioctl (module_fd, req, &commande);
-
+    printf ("%s\n", commande.retour);
   }
 
   
