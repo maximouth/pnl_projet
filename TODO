@@ -22,7 +22,7 @@ regarder comment marche les workqueue aussi,
 le traitement de chaque truc est surement casse couille
 
 *********************
-7/04/2017 :
+07/04/2017 :
 *********************
 
 tout changer pour que ca marcher avec des structures :
@@ -43,3 +43,18 @@ RESTECP :p
 
 li 112 si je met un i plus grand que 4 seg fault alors que malloc 10...
 l 34 si je met un i plus grand que 8 seg fault alors que malloc 10...
+
+*********************
+09/04/2017 :
+*********************
+
+modification de la structure commande pour avoir un champs retour qui permet de passer le message de retour de l'ioctl par la structure
+
+ajout du copy_to_user pour faire passer la chaine de retour du coté user
+
+ajout de copy_from_user pour recuperer toute la structure pas juste la coquille
+
+manque des kmalloc de partout, je veux bien de l'aide dessus X)
+
+Reste plein de debug a faire je suppose si tu veux t'amuser à essayder de comprendre XD surtout du coté module pour le debug, la partie user est bonne.
+Manque juste la gestion du '&' mais on verra ca unefois le module debugge bien comme il faut 
