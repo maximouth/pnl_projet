@@ -29,19 +29,11 @@ int main (int argc, char ** argv) {
     commande.nom[i] = '\0';
   }
 
-  commande.param = malloc (10 * sizeof (char));
+  commande.param = malloc (10 * sizeof (char*));
 
-  for (i = 0 ; i < 8 ; i ++) {
+  for (i = 0 ; i < 10 ; i ++) {
     commande.param[i] = malloc (10 * sizeof (char));
-	  
-    for (y = 0 ; y < 10 ; y ++) {
-      commande.param[i][y] = '\0'; 
-    }
   }
-
-  commande.retour[0] = 'a';
-  commande.retour[1] = 'b';
-  commande.retour[2] = '\0';
       
   
   printf ("struct commande initialisée\n");
@@ -113,12 +105,12 @@ int main (int argc, char ** argv) {
 
     /* gestion des arguments plus casse couille...  */
 
-    //    clear the arguments
-    for (i = 0 ; i < 4 ; i ++) {
+    /* //    clear the arguments */
+    for (i = 0 ; i < 10 ; i ++) {
       for (y = 0 ; y < 10 ; y ++) {
     	commande.param[i][y] = '\0';
-	printf ("clear i %d ; y %d\n", i , y);
-	fflush (stdin);	
+	//printf ("clear i %d ; y %d\n", i , y);
+    	//fflush (stdin);
       }
     }
 
@@ -206,7 +198,7 @@ int main (int argc, char ** argv) {
     }
     
     ioctl (module_fd, req, &commande);
-    printf ("%s\n", commande.retour);
+    printf ("retour : %s\n", commande.retour);
   }
 
   

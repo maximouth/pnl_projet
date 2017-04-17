@@ -21,7 +21,7 @@ MODULE_DESCRIPTION("Module bash en ioctl");
 */
 
 static struct commande *command_list;
-static int cmd_cpt = 0;
+static int cmd_cpt;
 
 /***********************************************************************
  *   IOCTL fonctions definition
@@ -32,21 +32,20 @@ static int cmd_cpt = 0;
 static char * io_list (int max) {
   int i,y = 0;
   // faire un kmalloc je pense pour pouvoir passer retour sans perte de donnée
-  char retour[1024];
+  char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
 
   for ( i = 0; i < max ; i ++) {
-    pr_info ("nom : %s ", command_list[i].nom);
-    strcpy (retour, command_list[i].nom);
-    strcpy (retour, " ");
-    while (command_list[i].param[y] != NULL) {
-      pr_info ("param %d : %s ", y, command_list[i].param[y]);
-      strcpy (retour, command_list[i].param[y]);
-      strcpy (retour, " ");
+    pr_info ("nom : %s \n", command_list[i].nom);
+    strcat (retour, command_list[i].nom);
+    strcat (retour, " ");
+    while ( (command_list[i].param[y] != NULL) && (y < 10)) {
+      pr_info ("param %d : %s \n", y, command_list[i].param[y]);
+      strcat (retour, command_list[i].param[y]);
+      strcat (retour, " ");
       y++;
     }
-    strcpy (retour, "\n");
+    strcat (retour, "\n");
   }
-
   return retour;
 }
 
@@ -62,25 +61,51 @@ static char * io_list (int max) {
  * 
  **********************************************************************/
 long device_ioctl(struct file *filp, unsigned int request, unsigned long param) {
-  char *retour;
+  char *retour = "toto\0";
   struct commande* args = (struct commande *) param;
   struct commande args_cpy;
   int i = 0;
   
   /* copy_from_user */
-  copy_from_user (&args_cpy, args, sizeof (struct commande));
-  copy_from_user (&args_cpy.nom, args->nom, sizeof (args->nom));
-  copy_from_user (&args_cpy.param, args->param, sizeof (args->param));
+  if (copy_from_user (&args_cpy, args, sizeof (struct commande)) != 0) {
+    panic ("into 1st copy");
+  }
+  if (copy_from_user (&args_cpy.nom, args->nom, sizeof (args->nom)) != 0) {
+    panic ("into 2nd copy");
+  }
+  if (copy_from_user (&args_cpy.param, args->param, sizeof (args->param)) != 0) {
+    panic ("into 3rd copy");
+  }
+  for (i = 0 ; i < 10 ; i++) {
+    if (copy_from_user (&args_cpy.param[i], args->param[i], sizeof (args->param[i])) != 0) {
+      panic ("into copy arg %d", i);
+    }
+  }
   
+  /* /\* remplissage structure arg*\/ */
+  /* /\* */
+  /*  * parcourir les parametres recu en arg et faire des strcpy */
+  /*  * */
+  /*  *\/ */
+
+  pr_info ("nom %s \n" , args->nom);
+  i = 0;
   
-  /* remplissage structure arg*/
-  /*
-   * parcourir les parametres recu en arg et faire des strcpy
-   *
-   */
-  strcpy (command_list[cmd_cpt].nom , args_cpy.nom);
-  while (args_cpy.param[i] != NULL) {
-    strcpy (command_list[cmd_cpt].param[i] , args_cpy.param[i]);
+  while ( args->param[i] != NULL) {
+    pr_info ("param %d %s \n" , i, args->param[i]);
+    i++;
+  }
+
+  
+  strcpy (command_list[cmd_cpt].nom , args->nom);
+  i = 0;
+  pr_info ("strcopy fait \n");
+  
+  while (i < 10) {
+    if (args->param[i] != NULL) { 
+      strcpy (command_list[cmd_cpt].param[i] , args->param[i]);
+    }
+    pr_info ("remplissage arg %d\n", i);
     i ++;
   }
   
@@ -156,14 +181,17 @@ static int __init mon_module_init(void) {
   pr_info("Coucou toi..!\n");
   major = register_chrdev (0, "our_mod", &fops_mod);
 
-  command_list = kmalloc (10 * sizeof (struct commande), __GFP_WAIT | __GFP_FS);
+  cmd_cpt = 0;
+  
+  command_list = kmalloc (10 * sizeof (struct commande), GFP_KERNEL);
   for ( i = 0 ; i < 10 ; i ++) {
-    //command_list[i].nom = kmalloc (10 * sizeof (char), __GFP_WAIT | __GFP_FS);
-    //command_list[i].param = kmalloc (10 * sizeof (char), __GFP_WAIT | __GFP_FS);
+    command_list[i].nom   = kmalloc (10 * sizeof (char), GFP_KERNEL);
+    command_list[i].param = kmalloc (10 * sizeof (char*), GFP_KERNEL);
     for ( y = 0 ; y < 10 ; y ++) {
-      //command_list[i].param[y] = "\0";
+      command_list[i].param[y] = kmalloc (10 * sizeof (char), GFP_KERNEL);
+      command_list[i].nom[y]   = '\0';
     }
-    //command_list[i].nom = "\0";
+
     pr_info ("structure command list initialise\n");
       
   }
@@ -184,10 +212,10 @@ static void __exit mon_module_cleanup(void) {
  
   /* faire free sur la structure commandelist  */
   for ( i = 0 ; i < 10 ; i ++) {
-    //kfree (command_list[i]. nom);
-    //kfree (command_list[i].param);
+    kfree (command_list[i]. nom);
+    kfree (command_list[i].param);
   }
-  //kfree (command_list);
+  kfree (command_list);
   pr_info("free des structures\n");
  
   
