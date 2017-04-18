@@ -25,6 +25,13 @@
 #endif
 #include <asm/page.h>
 #include <asm/pgtable.h>
+#include <linux/pid_namespace.h>
+#include <linux/init_task.h>
+#include <linux/syscalls.h>
+#include <linux/init.h>
+#include <linux/bootmem.h>
+#include <linux/hash.h>
+#include <linux/pid.h>
 
 /* our definition */
 #include "our_mod.h"
@@ -84,6 +91,45 @@ static char * io_list (int max) {
     strcat (retour, "\n");
   return retour;
 }
+
+/* envoyer un signal à un processus */
+static char * io_kill (int val) {
+  char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+  // faire find_mod
+  struct module * mod;
+  int res_pid = 0;
+  long rr;
+  //char str[15];
+  struct pid* pid;
+  
+  //  mod = find_module (command_list[val-1].param[0]);
+
+  /* if (mod->num_kp != 2) { */
+  /*   strcat (retour, "wrong utilisation!\nkill <signal> <pid>\n\n"); */
+  /*   return retour; */
+  /* } */
+
+  res_pid = kstrtol (command_list[val-1].param[1], 10, &rr);
+  
+  pid = find_vpid( res_pid );
+
+  if (pid == NULL) {
+    strcat (retour, "No such active pid\n");
+    return retour;
+  }
+
+  res_pid = kstrtol (command_list[val-1].param[0], 10, &rr);
+  
+  if (kill_pid (pid, res_pid, 1) == 0) {
+    strcat (retour, "kill succed\n");
+    return retour;
+  }
+
+  strcat (retour, "kill failed\n");
+  
+  return retour;
+}
+
 
 /* afficher l'etat de la memoire */
 static char * io_meminfo (void) {
@@ -261,6 +307,8 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case KILL_IOR :
     pr_info ("into kill ioctl");
     cmd_cpt ++;
+    retour = io_kill(cmd_cpt);
+    cmd_cpt --;
 
     break;
 
