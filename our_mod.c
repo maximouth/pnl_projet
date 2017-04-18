@@ -7,6 +7,24 @@
 #include <linux/gfp.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/mm.h>
+#include <asm/page.h>
+#include <asm/pgtable.h>
+#include <linux/hugetlb.h>
+#include <linux/mman.h>
+#include <linux/mmzone.h>
+#include <linux/proc_fs.h>
+#include <linux/quicklist.h>
+#include <linux/seq_file.h>
+#include <linux/swap.h>
+#include <linux/vmstat.h>
+#include <linux/atomic.h>
+#include <linux/vmalloc.h>
+#ifdef CONFIG_CMA
+#include <linux/cma.h>
+#endif
+#include <asm/page.h>
+#include <asm/pgtable.h>
 
 /* our definition */
 #include "our_mod.h"
@@ -46,6 +64,54 @@ static char * io_list (int max) {
     }
     strcat (retour, "\n");
   }
+  return retour;
+}
+
+/* afficher l'etat de la memoire */
+static char * io_meminfo (void) {
+  struct sysinfo i;
+  char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+  char str[15];
+  
+  si_meminfo(&i);
+  // rajouter si_swapinfo(&i);
+  // impossible inserer module si c'est ecrit
+  
+  strcat(retour, "MemTotal :");
+  sprintf(str, "%ld", i.totalram);
+  strcat (retour, str);
+  strcat(retour, "\n");
+
+  strcat(retour, "MemFree :");
+  sprintf(str, "%ld", i.freeram);
+  strcat (retour, str);
+  strcat(retour, "\n");
+
+  strcat(retour, "Buffers :");
+  sprintf(str, "%ld", i.bufferram);
+  strcat (retour, str);
+  strcat(retour, "\n");
+
+  strcat(retour, "HighTotal :");
+  sprintf(str, "%ld", i.totalhigh);
+  strcat (retour, str);
+  strcat(retour, "\n");
+
+  strcat(retour, "HighFree :");
+  sprintf(str, "%ld", i.freehigh);
+  strcat (retour, str);
+  strcat(retour, "\n");
+
+  strcat(retour, "LowTotal :");
+  sprintf(str, "%ld", i.totalram - i.totalhigh);
+  strcat (retour, str);
+  strcat(retour, "\n");
+
+  strcat(retour,"LowFree :");
+  sprintf(str, "%ld", i.freeram - i.freehigh);
+  strcat (retour, str);
+  strcat(retour, "\n");	  
+	  
   return retour;
 }
 
@@ -141,6 +207,8 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MEMINFO_IO :
     pr_info ("into meminfo ioctl");
     cmd_cpt ++;
+    retour = io_meminfo();
+    cmd_cpt --;
 
     break;
 
