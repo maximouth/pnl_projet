@@ -198,7 +198,7 @@ int main (int argc, char ** argv) {
     }
     
     ioctl (module_fd, req, &commande);
-    printf ("retour : %s\n", commande.retour);
+    printf ("%s", commande.retour);
   }
 
   

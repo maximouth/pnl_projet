@@ -32,6 +32,17 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("NOUS, 2017");
 MODULE_DESCRIPTION("Module bash en ioctl");
+MODULE_VERSION("1.0");
+
+static int PORT_LED0;
+static int PORT_LED1;
+
+module_param (PORT_LED0, int, 0);
+MODULE_PARM_DESC (PORT_LED0, "num de port de la led 0");
+module_param (PORT_LED1, int, 0);
+MODULE_PARM_DESC (PORT_LED1, "num de port de la led 1");
+
+
 
 /*  EXAMPLE of module PARAM 
  * module_param (PORT_LED0, int, 0);
@@ -51,9 +62,15 @@ static char * io_list (int max) {
   int i,y = 0;
   // faire un kmalloc je pense pour pouvoir passer retour sans perte de donnée
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+  char str[15];
 
+  strcat (retour, "id|command\n");
+  
   for ( i = 0; i < max ; i ++) {
     pr_info ("nom : %s \n", command_list[i].nom);
+    sprintf(str, "%d", i);
+    strcat (retour, str);
+    strcat (retour, " ");
     strcat (retour, command_list[i].nom);
     strcat (retour, " ");
     while ( (command_list[i].param[y] != NULL) && (y < 10)) {
@@ -64,6 +81,7 @@ static char * io_list (int max) {
     }
     strcat (retour, "\n");
   }
+    strcat (retour, "\n");
   return retour;
 }
 
@@ -114,6 +132,54 @@ static char * io_meminfo (void) {
 	  
   return retour;
 }
+
+/* afficher l'etat de la memoire */
+static char * io_modinfo (int val) {
+  char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+  // faire find_mod
+  struct module * mod;
+  int i = 0;
+  char str[15];
+    
+  mod = find_module (command_list[val-1].param[0]);
+
+  if (mod != NULL) {
+    strcat (retour, "version " );
+    strcat (retour , mod->version);
+    strcat (retour, "\n" );
+    strcat (retour, "name " );
+    strcat (retour , mod->name);
+    strcat (retour, "\n" );
+    strcat (retour, "base addr " );
+    strcat (retour , mod->module_core);
+    strcat (retour, "\n" );
+    strcat (retour, "nb param " );
+    sprintf(str, "%u", mod->num_kp);
+    strcat (retour , str);
+    strcat (retour, " :\n" );
+
+    /* reste l'adresse à trouver */
+
+    /* afficher la valeur du parametre aussi */
+    while (i < mod->num_kp ) {
+      strcat (retour, "->param ");
+      sprintf(str, "%d", i);
+      strcat (retour , str);
+      strcat (retour , " : name ");
+      strcat (retour , mod->kp[i].name );
+      strcat (retour, "\n" );
+      i++;
+    }
+    
+  }
+  else {
+    strcat (retour, "module inexistant\n");
+  }
+
+  pr_info ("fini modinfo\n");
+  return retour;
+}
+  
 
 
 /***********************************************************************
@@ -171,7 +237,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     if (args->param[i] != NULL) { 
       strcpy (command_list[cmd_cpt].param[i] , args->param[i]);
     }
-    pr_info ("remplissage arg %d\n", i);
+    pr_info ("remplissage arg %d : %s\n", i, command_list[cmd_cpt].param[i] );
     i ++;
   }
   
@@ -215,6 +281,8 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MODINFO_IOR :
     pr_info ("into modinfo ioctl");
     cmd_cpt ++;
+    retour = io_modinfo(cmd_cpt);
+    cmd_cpt --;
 
     break;
 
@@ -260,7 +328,7 @@ static int __init mon_module_init(void) {
       command_list[i].nom[y]   = '\0';
     }
 
-    pr_info ("structure command list initialise\n");
+    //pr_info ("structure command list initialise\n");
       
   }
   
