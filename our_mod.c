@@ -95,8 +95,8 @@ static char * io_list (int max) {
 /* envoyer un signal à un processus */
 static char * io_kill (int val) {
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
-  // faire find_mod
-  struct module * mod;
+  //faire find_mod
+  //struct module * mod;
   int res_pid = 0;
   long rr;
   //char str[15];
@@ -109,18 +109,26 @@ static char * io_kill (int val) {
   /*   return retour; */
   /* } */
 
+  /* get pid struct */
   res_pid = kstrtol (command_list[val-1].param[1], 10, &rr);
+
+  pr_info ("commande pid : %s\n", command_list[val-1].param[1]);
+  pr_info ("res pid : %d, rr : %ld\n", res_pid, rr);
   
-  pid = find_vpid( res_pid );
+  pid = find_vpid( rr );
+
+  /* get signal number */
+  res_pid = kstrtol (command_list[val-1].param[0], 10, &rr);
+
+  pr_info ("signal: %s\n", command_list[val-1].param[0]);
+  pr_info ("res signal : %d, rr : %ld\n", res_pid, rr);
 
   if (pid == NULL) {
     strcat (retour, "No such active pid\n");
     return retour;
   }
-
-  res_pid = kstrtol (command_list[val-1].param[0], 10, &rr);
   
-  if (kill_pid (pid, res_pid, 1) == 0) {
+  if (kill_pid (pid, rr, 1) == 0) {
     strcat (retour, "kill succed\n");
     return retour;
   }
@@ -243,6 +251,15 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   struct commande* args = (struct commande *) param;
   struct commande args_cpy;
   int i = 0;
+
+  pr_info ("nom %s \n" , args->nom);
+  i = 0;
+  
+  while (i < 10) {
+    pr_info ("param %d %s \n" , i, args->param[i]);
+    i++;
+  }
+
   
   /* copy_from_user */
   if (copy_from_user (&args_cpy, args, sizeof (struct commande)) != 0) {
@@ -254,25 +271,26 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   if (copy_from_user (&args_cpy.param, args->param, sizeof (args->param)) != 0) {
     panic ("into 3rd copy");
   }
-  for (i = 0 ; i < 10 ; i++) {
-    if (copy_from_user (&args_cpy.param[i], args->param[i], sizeof (args->param[i])) != 0) {
-      panic ("into copy arg %d", i);
-    }
-  }
+
+  /* for (i = 0 ; i < 10 ; i++) { */
+  /*   if (copy_from_user (&args_cpy.param[i], args->param[i], sizeof (args->param[i])) != 0) { */
+  /*     panic ("into copy arg %d", i); */
+  /*   } */
+  /* } */
   
   /* /\* remplissage structure arg*\/ */
   /* /\* */
   /*  * parcourir les parametres recu en arg et faire des strcpy */
   /*  * */
   /*  *\/ */
-
   pr_info ("nom %s \n" , args->nom);
   i = 0;
   
-  while ( args->param[i] != NULL) {
+  while (i < 10) {
     pr_info ("param %d %s \n" , i, args->param[i]);
     i++;
   }
+
 
   
   strcpy (command_list[cmd_cpt].nom , args->nom);
