@@ -70,6 +70,9 @@ int main (int argc, char ** argv) {
     printf ("Veuillez entrer votre commande :\n");
     fflush (stdin);
 
+    //reset the asynchrone value
+    commande.asynchrone = 0;
+    
   for (i = 0 ; i < 10 ; i ++) {
     commande.nom[i] = '\0'; 
   }
@@ -136,6 +139,10 @@ int main (int argc, char ** argv) {
 	i++;
 	read (stdin_fd, read_buf, 1);
       }
+
+      if (commande.param[y][0] == '&') {
+	commande.asynchrone = 1;
+      }
       
 #ifdef DEBUG
       printf ("read command arg %d : %s\n", y, commande.param[y]);
@@ -171,6 +178,11 @@ int main (int argc, char ** argv) {
       //      read (stdin_fd, read_buf, 1);
       y++;
       }
+      
+      if (commande.param[y-1][0] == '&') {
+	commande.asynchrone = 1;
+      }
+
 
     }      
 
@@ -196,7 +208,8 @@ int main (int argc, char ** argv) {
     else if (strcmp (commande.nom, "list") == 0 ) {
       req = LIST_IO;
     }
-    
+
+    printf ("asynchrone : %d\n", commande.asynchrone);
     ioctl (module_fd, req, &commande);
     printf ("%s", commande.retour);
   }
