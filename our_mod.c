@@ -59,6 +59,13 @@ MODULE_PARM_DESC (PORT_LED1, "num de port de la led 1");
 static struct commande *command_list;
 static int cmd_cpt;
 
+/**** Workqueue declaration
+
+
+
+ ****/
+
+
 /***********************************************************************
  *   IOCTL fonctions definition
  * 
@@ -67,7 +74,6 @@ static int cmd_cpt;
 /* parcourrir les diffentes commandes utilisées  */
 static char * io_list (int max) {
   int i,y = 0;
-  // faire un kmalloc je pense pour pouvoir passer retour sans perte de donnée
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   char str[15];
 
@@ -357,8 +363,9 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   }
 
   /* return copy value to the user  */
-
+  
   copy_to_user (args->retour, retour, strlen (retour));
+  kfree (retour);
   
   return 0;
   

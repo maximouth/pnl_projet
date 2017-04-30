@@ -122,8 +122,8 @@ int main (int argc, char ** argv) {
      */
 
     /* only one for fg and modinfo  */
-    if ( strcmp (commande.nom, "fg") == 0 ||
-	 strcmp (commande.nom, "modinfo") == 0   ) {
+    if ( strcmp (commande.nom, "fffff") == 0 ||
+	 strcmp (commande.nom, "gkgkgkgk") == 0   ) {
 
       y = 0;
       i = 0;
@@ -178,8 +178,10 @@ int main (int argc, char ** argv) {
       //      read (stdin_fd, read_buf, 1);
       y++;
       }
+
+      if (y != 0) y = y -1;
       
-      if (commande.param[y-1][0] == '&') {
+      if (commande.param[y][0] == '&') {
 	commande.asynchrone = 1;
       }
 
