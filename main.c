@@ -34,7 +34,9 @@ int main (int argc, char ** argv) {
   for (i = 0 ; i < 10 ; i ++) {
     commande.param[i] = malloc (10 * sizeof (char));
   }
-      
+
+
+
   
   printf ("struct commande initialisée\n");
   fflush (stdin);
@@ -66,6 +68,12 @@ int main (int argc, char ** argv) {
   printf ("Bienvenu! \n");
 
   while (1) {
+
+    commande.retour = malloc (1024 * sizeof (char));
+    for (i = 0 ; i < 1024 ; i ++) {
+      commande.retour[i] = '\0';
+    }
+
     
     printf ("Veuillez entrer votre commande :\n");
     fflush (stdin);
@@ -214,6 +222,9 @@ int main (int argc, char ** argv) {
     printf ("asynchrone : %d\n", commande.asynchrone);
     ioctl (module_fd, req, &commande);
     printf ("%s", commande.retour);
+    if (commande.retour != NULL) {
+      free (commande.retour);
+    }
   }
 
   

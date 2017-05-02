@@ -94,7 +94,7 @@ static char * io_list (int max) {
     }
     strcat (retour, "\n");
   }
-    strcat (retour, "\n");
+    strcat (retour, "\n\0");
   return retour;
 }
 
@@ -253,7 +253,7 @@ static char * io_modinfo (int val) {
  * 
  **********************************************************************/
 long device_ioctl(struct file *filp, unsigned int request, unsigned long param) {
-  char *retour = "toto\0";
+  char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   struct commande* args = (struct commande *) param;
   struct commande args_cpy;
   int i = 0;
@@ -366,7 +366,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   
   copy_to_user (args->retour, retour, strlen (retour));
   kfree (retour);
-  
+  pr_info ("RETOUR %s", retour);
   return 0;
   
 }
