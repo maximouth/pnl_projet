@@ -185,7 +185,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case LIST_IO :
     pr_info ("into list ioctl");
     cmd_cpt ++;
-    retour = io_list (cmd_cpt);
+    //retour = io_list (cmd_cpt);
     cmd_cpt --;
     break;
 
@@ -198,7 +198,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case KILL_IOR :
     pr_info ("into kill ioctl");
     cmd_cpt ++;
-    retour = io_kill(cmd_cpt);
+    //retour = io_kill(cmd_cpt);
     cmd_cpt --;
 
     break;
@@ -212,7 +212,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MEMINFO_IO :
     pr_info ("into meminfo ioctl");
     cmd_cpt ++;
-    retour = io_meminfo();
+    //retour = io_meminfo();
     cmd_cpt --;
 
     break;
