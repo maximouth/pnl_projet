@@ -6,7 +6,7 @@ struct commande {
   char *nom;
   char **param;
   int asynchrone;
-  char retour[1024];
+  char *retour;
 };
 
 
