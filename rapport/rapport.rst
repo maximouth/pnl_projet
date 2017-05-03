@@ -330,55 +330,117 @@ Le fichier de notre module est decoupé en 4 morceaux :
 Initialisation
 &&&&&&&&&&&&&&
 
-Dans l'initialisation nous commençons par trouver un numero majeur à
-notre module pour qu'il ai une place dans le ``/proc/devices`` qui nous
-permettera de creer un noeud plus tard avec un ``mknod``
+|
+| Dans l'initialisation nous commençons par trouver un numero majeur à notre module pour qu'il
+| ai une place dans le ``/proc/devices`` qui nous permettera de creer un noeud plus tard avec 
+| un ``mknod``
 
 .. code :: c
 
   major = register_chrdev (0, "our_mod", &fops_mod);
 
-fops_mod contient la liste des appels systeme que notre module gère et
-les fonctions associées a chaque appel.
-Ici nous n'avons que **ioctl** qui est représenté.
+|
+| fops_mod contient la liste des appels systeme que notre module gère et les fonctions associées
+| a chaque appel.
+| Ici nous n'avons que **ioctl** qui est représenté.
 
 
-Pour pouvoir saugevarder qu'elle fonction s'execute à quel moment,
-nous avons besoin d'un tableau de ``structure commande``
+| Pour pouvoir saugevarder qu'elle fonction s'execute à quel moment, nous avons besoin d'un
+| tableau de ``structure commande``
 
-Dans L'initialisation nous continons par allouer de la mémoire kernel avec des
-kmalloc pour chaques composant du tableau, nous avons limité le nombre
-de commandes en simultanées à 10.
+| Dans L'initialisation nous continons par allouer de la mémoire kernel avec des kmalloc 
+| pour chaques composant du tableau, nous avons limité le nombre de commandes en simultanées
+| à 10.
 
+|
 
 Destruction
 &&&&&&&&&&&
 
+|
+| Pour la destruction nous devons retirer notre module des numeros  majeurs de devices afin
+| de ne pas saturer la liste.
+
+.. code :: c
+
+  unregister_chrdev (major, "our_mod");
+
+|
+
+| Une fois notre module retiré des numéros majeurs, ils faut libererla mémoire pour éviter
+| les fuites mémoire.
+| Nous faisons donc des ``kfree`` pour liberer notre structure.
+
+|
+|
+|
+|
+
 Ioctl
 &&&&&
 
+
+Notre fonction ``device_ioctl`` est appelée pour chaque appel à ioctl.
+
+| Nous commençons par copier la structure ``commande`` passée en  argument par l'utilisateur,
+| donc du côté utilisateur, vers les adresses adressables coté kernel grâce à la fonction
+| ``copy_from_user``. Nous ramenons du coté kernel chaques parties de la structure.
+| 
+| 
+| Nous entrons ensuite dans un switch qui appel la fonction correspondante au numero
+| passé en argument. Et renvoi à l'utilisateur la chaine de caractère à afficher grace à la
+| fonction ``copy_to_user``.
+| Nous liberons enfin le pointeur contenant cette chaine pour eviter les fuites mémoires.
+| 
+|
+
 Fonctions
 &&&&&&&&&
+|
 
 List
 ####
 
+|
+
+|
+
 Fg 
 ###
+
+|
 
 Wait
 ####
 
+|
+
 Kill
 ####
+
+|
 
 Modinfo
 #######
 
+|
+
 Meminfo
 #######
 
+|
+|
 
+Gestion synchrone/asynchrone
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+|
+
+explication des workqueue/waitqueue
+
+|
+
+------------------------------------------
    
 VI) Conclusion
 ==============    
