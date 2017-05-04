@@ -34,22 +34,22 @@ Introduction
 
 |
 
-| Ce document prÈsente le rapport du projet **Bash** de l'UE *PNL*.
-| Le projet a pour but de rÈaliser un invite de commande pour le noyau linux et de le tester
-| sur sur une machine virtuelle. 
-| Lors de ce Projet nous nous sommes servis d'une VM *arch linux* avec comme version du noyau 4.2.3.
-| Nous avons decouvert l'utilisation d'*ioctl* et l'intÈgration d'un module dans un noyau ainsi 
-| que l'architecture du noyau elle mÍme.
+| Ce document pr√©sente le rapport du projet **Bash** de l'UE *PNL*.
+| Le projet a pour but de r√©aliser un invite de commande pour le noyau linux et de le tester
+| sur une machine virtuelle. 
+| Lors de ce Projet nous nous sommes servis d'une VM *arch linux* en version noyau 4.2.3.
+| Nous avons d√©couvert l'utilisation d'*ioctl*, l'int√©gration d'un module dans un noyau ainsi 
+| que l'architecture du noyau.
 |
 
-Ce projet se dÈcompose en 2 Ètapes :
+Ce projet se d√©compose en 2 √©tapes :
 
  - L'application utilisateur.
  - Le module noyau.
 
 |
 
-Ce projet a ÈtÈ developpÈ sous git :
+Ce projet a √©t√© d√©velopp√© sous git :
  https://github.com/maximouth/pnl_projet
 
 |
@@ -72,13 +72,16 @@ I) Mode d'emploi
 
 | 
 
-Pour faciliter la compilation, le transfert et l'initialisation des diffÈrents modules et applications, nous avons crÈe 2 petits scripts Bash :
+Pour faciliter la compilation, le transfert et l'initialisation des diff√©rents modules et applications, nous avons cr√©√© deux petits scripts Bash :
 
   - upload.sh
   - init.sh
 
 |
 |
+|
+|
+| upload.sh sert si l'on a la partition root mont√©e dans le dossier vm_root du r√©pertoire courant
 
 .. code:: sh
    
@@ -105,12 +108,12 @@ Pour faciliter la compilation, le transfert et l'initialisation des diffÈrents m
 |
 
 
-upload.sh sert si l'on a la partition root montÈe dans le dossier vm_root du rÈpertoire courant :
+upload.sh permet de :
 
- - demonter /monter la partition,
+ - d√©monter /monter la partition,
  - compiler le module,
- - copier differents fichier sur la partition,
- - syncroniser pour √™tre sur que tout soit bien Ècrit
+ - copier diff√©rents fichiers sur la partition,
+ - synchroniser pour √™tre sur que tout soit bien √©crit
  - lancer la machine virtuelle.
 
 
@@ -123,7 +126,7 @@ upload.sh sert si l'on a la partition root montÈe dans le dossier vm_root du rÈp
 |
 |
 |
-
+| init.sh sert une fois la machine virtuelle d√©marr√©e
 
 .. code:: sh
 
@@ -138,9 +141,9 @@ upload.sh sert si l'on a la partition root montÈe dans le dossier vm_root du rÈp
   dmesg
   
   make -f Makefile_app
-  gcc toto.c
+  gcc -Wall -o toto.x toto.c
   
-  ./a.out &
+  ./toto.x &
   
   ps
   
@@ -149,12 +152,12 @@ upload.sh sert si l'on a la partition root montÈe dans le dossier vm_root du rÈp
 |
 |
 
-init.sh sert une fois la machine virtuelle dÈmarrÈe ‡ :
+init.sh permet de :
 
  - nettoyer le dmesg,
- - inserer le module,
- - creer le neud,
- - lancer une petite application en arriËre plan 
+ - ins√©rer le module,
+ - cr√©er le neud,
+ - lancer une petite application (toto.x) en arri√®re plan 
  - compiler l'application utilisateur et la lancer.
 
 
@@ -178,9 +181,7 @@ init.sh sert une fois la machine virtuelle dÈmarrÈe ‡ :
 |
 |
 |
-|
-|
-|
+
 
 
 II) architecture du projet
@@ -188,15 +189,15 @@ II) architecture du projet
 
 |
 
-Notre projet se dÈcompose en 3 parties :
+Notre projet se d√©compose en 3 parties :
 
- - le fichier *our_mod.h* contenant les differentes structures que nous
+ - le fichier *our_mod.h* contient les diff√©rentes structures que nous
    allons utiliser tout au long du projet.
- - le fichier *main.c* qui correspond ‡ l'application utilisateur qui
-   recupËre les demande de l'utilisateur et effectue les appels systeme.
- - le fichier *our_mod.c* qui est notre module. Il s'occupe de
-   recuperer les appels systeme **ioctl** et d'effectuer les actions
-   correspondantes ‡ se que l'utilisateur ‡ demandÈ.
+ - le fichier *main.c* correspond √† l'application utilisateur qui
+   r√©cup√®re les demandes de l'utilisateur et effectue les appels syst√®me.
+ - le fichier *our_mod.c* correspond √† notre module. Il s'occupe de
+   r√©cuperer les appels syst√®me **ioctl** et d'effectuer les actions
+   correspondantes √† ce que l'utilisateur a demand√©.
 
 |
 
@@ -206,7 +207,7 @@ III) structures
 ==============
 
 |
-| Pour les appels ‡ **ioctl** nous avons du crÈer une structure nous permettant de traiter les diffÈrentes
+| Pour les appels √† **ioctl** nous avons d√ª cr√©er une structure nous permettant de traiter les diff√©rentes
 | commandes.   
 |
 
@@ -219,21 +220,20 @@ III) structures
     char *retour;
   };
 
-Notre structure est composÈe de plusieurs champs :
+Notre structure est compos√©e de plusieurs champs :
 
- - **nom**, qui sert ‡ contenir le nom de la commande.
+ - **nom**, qui sert √† contenir le nom de la commande.
  - **param**, un tableau de *char**, contenant les differents
    arguments que l'utilisateur peut passer avec la commande.
- - **asynchrone**, qui indique si la commande a ÈtÈ tapÈe avec un "&"
-   ‡ la fin, ce qui permettera de la faire s'executer en arriËre plan.
- - **retour**, qui est un pointeur contenant la chaine de caractËre a
+ - **asynchrone**, qui indique si la commande a √©t√© tap√©e avec un "&"
+   √† la fin, ce qui permet de la faire s'ex√©cuter en arri√®re plan.
+ - **retour**, qui est un pointeur contenant la chaine de caract√®re √†
    afficher en retour de l'appel systeme.
 
 |
 |
 |
-| Dans le fichier nous avons aussi les ``#define`` des diffÈrents
-numero de fonction d'appel ‡ **ioctl**.
+| Dans le fichier nous avons aussi les ``#define`` des diff√©rents num√©ros de fonction d'appel √† **ioctl**.
 
 .. code:: c
   
@@ -245,22 +245,19 @@ numero de fonction d'appel ‡ **ioctl**.
   #define MODINFO_IOR 15
   
 
-
-
 IV) Appli utilisateur
 =====================
 
 |
 
-| Notre application utilisateur prends en argument le nom du noeud sur lequel est ratachÈ notre module.
+| Notre application utilisateur prend en argument le nom du noeud sur lequel est ratach√© notre module.
 | Elle se lance avec :
 
 .. code:: bash
 
 	  ./Projet.x /dev/xxx
 
-|
-| Et voici ce que l'on obtiens en la lanÁant.
+| Et voici ce que nous obtenons en la lan√ßant.
 |
 
 .. image:: launch.png
@@ -271,45 +268,45 @@ IV) Appli utilisateur
 |
 
 
-L'utilisateur peut entrer un certain nombre de commande qui seront traitÈes par notre appel systeme :
+L'utilisateur peut entrer les commandes suivantes qui seront trait√©es par notre appel syst√®me :
 
- - **list**, qui affiche les processus en cours d'execution dans le module.
- - **fg <id>**, qui remet en premier plan une application qui s'executait de
-   faÁon asynchrone.
- - **wait <pid> [<pid>...]**, qui permet d'attendre la fin d'un processus donnÈ
+ - **list**, qui affiche les processus en cours d'ex√©cution dans le module.
+ - **fg <id>**, qui remet en premier plan une application entrain de
+   s'executer fa√ßon asynchrone.
+ - **wait <pid> [<pid>...]**, qui permet d'attendre la fin d'un processus donn√©
    en argument.
  - **kill <signal> <pid>**, qui permet d'envoyer un signal au processus
-   pointÈ par le pid.
- - **meminfo**, qui affiche l'Ètat actuel de la mÈmoire.
- - **modinfo <name>**, affiche les diffÈrentes informations liÈes au
-   module passÈ en argument.
+   point√© par le pid.
+ - **meminfo**, qui affiche l'√©tat actuel de la m√©moire.
+ - **modinfo <name>**, affiche les diff√©rentes informations li√©es au
+   module pass√© en argument.
 
 |
-| Si une autre commande est demandÈ par l'utilisateur ou si il y a une faute de frappe, on reÁoit une
-| erreur et l'utilisateur est invitÈ ‡ lancer une nouvelle commande.
+| Si une autre commande, que celles prevues, est demand√©e par l'utilisateur ou si il y a une faute de frappe, une
+| erreur est retourn√©e et l'utilisateur est invit√© √† lancer une nouvelle commande.
 |
 
 ------------------------------------
 
-| On commence par initialiser notre structure commande qui nous servira tout au long de la durÈe
-| de l'application
-| Puis on teste si le noeud existe, si il n'existe pas l'application s'arrÍte.
-| On ouvre ensuite l'entrÈe standard pour pouvoir lire dessus les commandes de l'utilisateur.
+| Dans ce programme, on commence par initialiser la structure commande qui servira tout au
+| long de la dur√©e de l'application
+| Puis on teste si le noeud existe, si il n'existe pas l'application s'arr√™te sinon, on ouvre l'entr√©e
+| standard pour pouvoir lire les commandes de l'utilisateur.
 | 
-| On entre ensuite dans la boucle ``while (1)`` du programme qui est la boucle principale. C'est ici que 
-| l'on lit les diffÈrentes commandes et arguments, et ou on fait l'appel ‡ l'ioctl 
+| On entre ensuite dans la boucle ``while (1)`` du programme qui est la boucle principale. C'est ici
+| qu'on lit les diff√©rentes commandes et arguments, et o√π on fait l'appel √† l'ioctl 
 |
 .. code:: c
 
    ioctl (module_fd, req, &commande);	  
 
 |
-| *module_fd* corresponds au descripteur de fichier du noeud ``/dev/xxx``.
-| *req* corresponds au numero de la fonction ‡ appeler.
-| *&commande* correspond ‡ l'adresse de la structure commande contenant tout les arguments ‡
-| passer ‡ la fonction demandÈe.
+| *module_fd* correspond au descripteur de fichier du noeud ``/dev/xxx``.
+| *req* correspond au num√©ro de la fonction √† appeler.
+| *&commande* correspond √† l'adresse de la structure commande contenant tous les arguments √†
+| passer √† la fonction demand√©e.
 
-Il y a ensuite l'affichage de la chaine de caractËres de retour de l'**ioctl**.
+Il y a ensuite l'affichage de la chaine de caract√®res en retour de l'**ioctl**.
 
 
 V) Module
@@ -318,11 +315,11 @@ V) Module
 |
 |
 
-Le fichier de notre module est decoupÈ en 4 morceaux :
- - **initialisation** du mode
+Notre module est d√©coup√© en 4 morceaux :
+ - **initialisation** du module
  - **destruction** du module
  - la fonction **ioctl**
- - les differentes **fonctions** appelÈes par l'appel systeme.
+ - les diff√©rentes **fonctions** appel√©es par l'appel systeme.
 
 
 
@@ -331,8 +328,8 @@ Initialisation
 &&&&&&&&&&&&&&
 
 |
-| Dans l'initialisation nous commenÁons par trouver un numero majeur ‡ notre module pour qu'il
-| ai une place dans le ``/proc/devices`` qui nous permettera de creer un noeud plus tard avec 
+| Dans l'initialisation nous commen√ßons par trouver un num√©ro majeur √† notre module pour qu'il
+| ait une place dans le ``/proc/devices`` qui nous permettera de cr√©er un noeud plus tard avec 
 | un ``mknod``
 
 .. code :: c
@@ -340,17 +337,17 @@ Initialisation
   major = register_chrdev (0, "our_mod", &fops_mod);
 
 |
-| fops_mod contient la liste des appels systeme que notre module gËre et les fonctions associÈes
-| a chaque appel.
-| Ici nous n'avons que **ioctl** qui est reprÈsentÈ.
+| fops_mod contient la liste des appels syst√®me que notre module g√®re et les fonctions associ√©es
+| √† chaque appel.
+| Pour le projet nous n'avons que **ioctl** qui est repr√©sent√©.
 
 
-| Pour pouvoir saugevarder qu'elle fonction s'execute ‡ quel moment, nous avons besoin d'un
-| tableau de ``structure commande``
+| Pour pouvoir sauvegarder quelle fonction s'ex√©cute et √† quel moment, nous avons besoin d'un
+| tableau de ``structure commande`` *(voir list)*
 
-| Dans L'initialisation nous continons par allouer de la mÈmoire kernel avec des kmalloc 
-| pour chaques composant du tableau, nous avons limitÈ le nombre de commandes en simultanÈes
-| ‡ 10.
+| Dans L'initialisation nous continuons par allouer de la m√©moire kernel avec des kmalloc 
+| pour chaques composant du tableau, nous avons limit√© le nombre de commandes 
+| en simultan√©es √† 10.
 
 |
 
@@ -358,7 +355,7 @@ Destruction
 &&&&&&&&&&&
 
 |
-| Pour la destruction nous devons retirer notre module des numeros  majeurs de devices afin
+| Pour la destruction nous devons retirer notre module des num√©ros  majeurs de devices afin
 | de ne pas saturer la liste.
 
 .. code :: c
@@ -367,9 +364,9 @@ Destruction
 
 |
 
-| Une fois notre module retirÈ des numÈros majeurs, ils faut libererla mÈmoire pour Èviter
-| les fuites mÈmoire.
-| Nous faisons donc des ``kfree`` pour liberer notre structure.
+| Une fois notre module retir√© des num√©ros majeurs, il faut liberer la m√©moire pour √©viter
+| les fuites m√©moire.
+| Nous faisons donc des ``kfree`` pour liberer les ressources allou√©es √† notre structure.
 
 |
 |
@@ -380,17 +377,17 @@ Ioctl
 &&&&&
 
 
-Notre fonction ``device_ioctl`` est appelÈe pour chaque appel ‡ ioctl.
+Notre fonction ``device_ioctl`` est appel√©e pour chaque appel √† ioctl.
 
-| Nous commenÁons par copier la structure ``commande`` passÈe en  argument par l'utilisateur,
-| donc du cÙtÈ utilisateur, vers les adresses adressables cotÈ kernel gr‚ce ‡ la fonction
-| ``copy_from_user``. Nous ramenons du cotÈ kernel chaques parties de la structure.
+| Nous commen√ßons par copier la structure ``commande`` pass√©e en  argument par l'utilisateur,
+| vers les adresses adressables cot√© kernel gr√¢ce √† la fonction ``copy_from_user``. Nous
+| ramenons du c√¥t√© kernel chaque partie de la structure.
 | 
 | 
 | Nous entrons ensuite dans un switch qui appel la fonction correspondante au numero
-| passÈ en argument. Et renvoi ‡ l'utilisateur la chaine de caractËre ‡ afficher grace ‡ la
+| pass√© en argument. Et renvoi √† l'utilisateur la chaine de caract√®re √† afficher grace √† la
 | fonction ``copy_to_user``.
-| Nous liberons enfin le pointeur contenant cette chaine pour eviter les fuites mÈmoires.
+| Nous liberons enfin le pointeur contenant cette chaine pour √©viter les fuites m√©moires.
 | 
 |
 
@@ -402,21 +399,75 @@ List
 ####
 
 |
+| Pour expliquer le fonctionnement de la fonction list nous devons d'abord expliquer la gestion
+| de la variale *command_list*.
+| Cette variable est d√©clar√©e globale et est un tableau de ``struct commande``. Nous avons aussi 
+| un compteur global *cmd_cpt* qui sert √† conna√Ætre le nombre de commande √† un temps donn√©.
+|
+| A chaque demande de l'utilisateur d'une commande, nous incr√©mentons le compteur et remplissons la
+| premi√®re case libre du tableau avec les informations de cette structure.
+| 
+.. code:: c
 
+  strcpy (command_list[cmd_cpt].nom , args->nom);
+  i = 0;
+  
+  while (i < 10) {
+    if (args->param[i] != NULL) { 
+      strcpy (command_list[cmd_cpt].param[i] , args->param[i]);
+    }
+    i ++;
+  }
+
+| Une fois la commande trait√©e nous d√©crementons le compteur.
+| 
+| De cette fa√ßon, pour afficher les diff√©rentes commandes s'√©xecutant √†  un moment donn√©, nous
+| parcourons simplement le tableau jusqu'√† la case numero *cpt_cmd-1*, en affichant le numero
+| **ID** de la tache et le **nom** de cette t√¢che.
+
+.. image:: list.png
+   :scale: 250 %
+   :alt: trame protocale DCC
+   :align: center
+
+
+|
 |
 
 Fg 
 ###
 
 |
+pas fait encore
+|
 
 Wait
 ####
 
 |
+pas fait encore
+|
 
 Kill
 ####
+
+|
+
+| Cette fonction sert √† pouvoir envoyer un signal √† un processus design√© par son **pid**.
+| Nous r√©cup√©rons le numero du signal √† envoyer et le pid dans la structure commande copi√© dans l'**ioctl**
+
+
+| Avant de pouvoir envoyer un signal √† un processus nous devons dabord commencer par verifier si
+| le processus corespondant existe. Nous le faisons gr√¢ce √† la fonction find_vpid() qui nous renvois un
+| pointeur sur la structure **pid** correspondant au processus qui √† le pid pass√© en argument.
+| 
+| Si le pointeur est ``NULL``, nous retournons que le pid n'existe pas.
+| 
+| Si il existe nous envoyons le signal au processus demand√© avec la fonction ``kill_pid`` et nous
+| testons sa valeur de retour. Si c'est r√©ussit nous renvoyons un aquittement de la demande, sinon
+| nous signalons que l'envois du signap √† rat√©.
+
+image?
 
 |
 
@@ -445,11 +496,12 @@ explication des workqueue/waitqueue
 VI) Conclusion
 ==============    
 
-Les 3 fichiers de notre projet passent bien le **checkpath**.
-
-Notre module rÈalise bien toutes les fonctions attendues de faÁon
-synchrone ou asynchrone.
-Toutes les fonctions fonctionnent bien comme il faut.
+| Les 3 fichiers de notre projet ne remontent pas d'erreurs lorqu'ils passent le **checkpath**. Notre
+| module r√©alise bien toutes les fonctions attendues de fa√ßon synchrone ou asynchrone qui
+| retournent les informations  attendues.
+| Nous avons limit√© volontairement le nombre de param√®tres  √† 10 afin de nous focaliser davantage 
+| sur les fonctions  √† √©crire. 
+|
 
 .. image:: trame.png
    :scale: 250 %
@@ -459,4 +511,4 @@ Toutes les fonctions fonctionnent bien comme il faut.
 
 .. code:: VHDL
 
-rajouter que le nombre de param est limitÈ ‡ 10.	  
+rajouter que le nombre de param est limit√© √† 10.	  
