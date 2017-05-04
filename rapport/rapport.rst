@@ -42,7 +42,7 @@ Introduction
 | que l'architecture du noyau.
 |
 
-Ce projet se décompose en 2 étapes :
+Ce projet se décompose en 2 parties :
 
  - L'application utilisateur.
  - Le module noyau.
@@ -426,26 +426,43 @@ List
 | **ID** de la tache et le **nom** de cette tâche.
 
 .. image:: list.png
-   :scale: 250 %
-   :alt: trame protocale DCC
+   :scale: 50 %
+   :alt: screen list
    :align: center
 
 
+|
+|
 |
 |
 
 Fg 
 ###
 
-|
-pas fait encore
+| **pas fait encore**
+
+| Avec cette fonction, nous recupérons la tache mise en attente dans la waiqueue afin qu'elle finisse de
+| s'executer et de pouvoir recuperer sa valeur de retour.
+
+.. image:: fg.png
+   :scale: 50 %
+   :alt: screen fg
+   :align: center
+
+
 |
 
 Wait
 ####
 
-|
-pas fait encore
+| **pas fait encore**
+
+.. image:: wait.png
+   :scale: 50 %
+   :alt: screen wait
+   :align: center
+
+
 |
 
 Kill
@@ -454,25 +471,27 @@ Kill
 |
 
 | Cette fonction sert à pouvoir envoyer un signal à un processus designé par son **pid**.
-| Nous récupérons le numero du signal à envoyer et le pid dans la structure commande copié dans l'**ioctl**
+| Nous récupérons le *numero du signal* à envoyer et le *pid* dans la structure commande copié dans l'**ioctl**
 
 
-| Avant de pouvoir envoyer un signal à un processus nous devons dabord commencer par verifier si
-| le processus corespondant existe. Nous le faisons grâce à la fonction find_vpid() qui nous renvois un
-| pointeur sur la structure **pid** correspondant au processus qui à le pid passé en argument.
-| 
+| Avant de pouvoir envoyer un signal à un *processus* nous devons dabord commencer par verifier si
+| le processus corespondant existe. Nous le faisons grâce à la fonction ``find_vpid()`` qui nous renvoit un
+| pointeur sur la structure **pid** correspondant au processus qui possède le pid passé en argument.
+
+.. code:: c
+
+  pid = find_vpid( num_pid );	  
+
 | Si le pointeur est ``NULL``, nous retournons que le pid n'existe pas.
 | 
 | Si il existe nous envoyons le signal au processus demandé avec la fonction ``kill_pid`` et nous
 | testons sa valeur de retour. Si c'est réussit nous renvoyons un aquittement de la demande, sinon
 | nous signalons que l'envois du signap à raté.
 
-image?
+.. code:: c
 
-|
+  if (kill_pid (pid, num_signal, 1) == 0)
 
-Modinfo
-#######
 
 |
 
@@ -480,7 +499,52 @@ Meminfo
 #######
 
 |
+| Cette fonction a pour but d'afficher l'état de la mémoire de la machine à un instant donné, pour
+| cela nous utlisons la fonction ``si_meminfo`` et ``si_swapinfo``, qui remplissent la 
+| ``structure sysinfo`` avec ses informations.
+
+.. code:: c
+
+  si_meminfo (&i);
+  si_swapinfo(&i);
+
+Ce qui nous permet ainsi d'acceder au differents champs de la
+structure pour en afficher le contenu
+
+.. image:: meminfo.png
+   :scale: 50 %
+   :alt: screen meminfo
+   :align: center
+
+
 |
+
+
+Modinfo
+#######
+
+|
+| Cette fonction permet d'afficher les informations d'un module chargé dans le noyau.
+| Nous commençons par recuperer le pointeur vers la ``structure module`` avec la fonction fin module.
+
+.. code:: c
+
+  mod = find_module (command_list[val-1].param[0]);	 
+
+| on teste ensuite si le module exite bien, sinon on retourne une chaine de caractère qui indique à
+| l'utilisateur que le module demandé n'existe pas.
+|
+| Si il existe on parcours la ``structure module`` pour en extraire les informations voulus tel
+| que la version le nom, l'adresse de base, le nombre de paramètres et les différents paramètres.
+
+.. image:: modinfo.png
+   :scale: 50 %
+   :alt: screen modinfo
+   :align: center
+
+
+|
+
 
 Gestion synchrone/asynchrone
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -503,7 +567,7 @@ VI) Conclusion
 | sur les fonctions  à écrire. 
 |
 
-.. image:: trame.png
+.. .. image:: trame.png
    :scale: 250 %
    :alt: trame protocale DCC
    :align: center
@@ -511,4 +575,3 @@ VI) Conclusion
 
 .. code:: VHDL
 
-rajouter que le nombre de param est limité à 10.	  
