@@ -63,6 +63,8 @@ MODULE_PARM_DESC (PORT_LED1, "num de port de la led 1");
 static struct commande *command_list;
 static int cmd_cpt;
 
+static int flags[10];
+
 /**** Workqueue declaration *****/
 
 struct signal_s {
@@ -75,6 +77,7 @@ struct work_user {
   struct signal_s signal;
   char ** param;
   char * retour;
+  int async;
 };
 
 static int flag = 0;
@@ -101,9 +104,22 @@ static void  io_list (struct work_struct *work) {
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   char str[15];
   struct work_user *wu;
-
+  int cpy;
+  
   wu = container_of(work, struct work_user, wk_ws);
 
+  if ( wu->async == 1) {
+    cpy= cmd_cpt - 1;
+    pr_info ("cpy : %d\n", cpy);
+    flags[cpy] = 0;
+    flag = 1;
+    cmd_cpt++;
+    wake_up(&cond_wait_queue);    
+    wait_event_interruptible (cond_wait_queue, flags[cpy] != 0);
+    flags[cpy] = 0;
+  }
+  
+  
   strcat (retour, "id|command\n");
   
   for ( i = 0; i < cmd_cpt ; i ++) {
@@ -131,6 +147,37 @@ static void  io_list (struct work_struct *work) {
     //  return retour;
     return;
 }
+
+/* reveiller un processus */
+static void  io_fg (struct work_struct *work) {
+
+  char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+  struct work_user *wu;
+  long int id;
+  
+  wu = container_of(work, struct work_user, wk_ws);
+
+  kstrtol (wu->param[0], 10, &id);
+  if ( (id > 10) || (id < 0)) {
+    retour = "wrong id";
+    wu->retour = retour;
+  }
+  else {
+    pr_info ("iddsqfrsd : %ld\n", id);
+    flags[id] = 1;
+    wake_up(&cond_wait_queue);
+    wait_event (cond_wait_queue, flag != 0);
+  }
+
+
+  
+
+  //  flag = 1;
+  //wake_up(&cond_wait_queue);
+  
+  return;
+}
+
 
 /* envoyer un signal à un processus */
 static void  io_kill (struct work_struct *work) {
@@ -392,6 +439,8 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     i ++;
   }
   
+
+  wk->async = args->asynchrone;
   
   /* case request is */
   switch (request) {
@@ -399,6 +448,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case LIST_IO :
     pr_info ("into list ioctl");
     cmd_cpt ++;
+
     flag = 0;
     INIT_WORK(&(wk->wk_ws), io_list);
     schedule_work(&(wk->wk_ws));
@@ -408,6 +458,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     wait_event(cond_wait_queue, flag != 0);
     pr_info ("apres wait");
     flag = 0;
+        
     cmd_cpt --;
     break;
 
@@ -415,11 +466,23 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     pr_info ("into fg ioctl");
     cmd_cpt ++;
 
+      flag = 0;
+      INIT_WORK(&(wk->wk_ws), io_fg);
+      schedule_work(&(wk->wk_ws));
+      //queue_work(work_station, &(wk->wk_ws));
+      //retour = io_list (cmd_cpt);
+      pr_info ("avant wait");
+      wait_event(cond_wait_queue, flag != 0);
+      pr_info ("apres wait");
+    
+    cmd_cpt --;
+    cmd_cpt --;
     break;
 
   case KILL_IOR :
     pr_info ("into kill ioctl");
     cmd_cpt ++;
+
     flag = 0;
     INIT_WORK(&(wk->wk_ws), io_kill);
     schedule_work(&(wk->wk_ws));
@@ -428,6 +491,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     pr_info ("apres wait");
     flag = 0;
     //    retour = io_kill(cmd_cpt);
+    
     cmd_cpt --;
 
     break;
@@ -441,6 +505,8 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MEMINFO_IO :
     pr_info ("into meminfo ioctl");
     cmd_cpt ++;
+
+    // if synchrone
     flag = 0;
     INIT_WORK(&(wk->wk_ws), io_meminfo);
     schedule_work(&(wk->wk_ws));
@@ -448,13 +514,15 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     wait_event(cond_wait_queue, flag != 0);
     pr_info ("apres wait");
     //retour = io_meminfo();
-    cmd_cpt --;
+      
+      cmd_cpt --;
 
     break;
 
   case MODINFO_IOR :
     pr_info ("into modinfo ioctl");
     cmd_cpt ++;
+
     flag = 0;
     INIT_WORK(&(wk->wk_ws), io_modinfo);
     schedule_work(&(wk->wk_ws));
@@ -462,19 +530,16 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     wait_event(cond_wait_queue, flag != 0);
     pr_info ("apres wait");
     //retour = io_modinfo(cmd_cpt);
+
+
     cmd_cpt --;
 
     break;
 
   default :
+    wk->retour = "wrong entry\n";
     pr_info ("ioctl function that does not exist");
   }
-
-  /* return copy value to the user  */
-  //  wk->retour = "eeee";
-  /* while (wk->retour[0] == '\0') { */
-  /*   //pr_info ("dans le while \n"); */
-  /* } */
 
   
   copy_to_user (args->retour, wk->retour, strlen (wk->retour));
