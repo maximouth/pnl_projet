@@ -95,19 +95,18 @@ DECLARE_WAIT_QUEUE_HEAD(cond_wait_queue);
 
 /* parcourrir les diffentes commandes utilisées  */
 static void  io_list (struct work_struct *work) {
-//static char * io_list (int max) {
-  // virer max avant dans les param
-  int max = 2;
+
+  
   int i,y = 0;
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   char str[15];
   struct work_user *wu;
 
   wu = container_of(work, struct work_user, wk_ws);
-  
+
   strcat (retour, "id|command\n");
   
-  for ( i = 0; i < max ; i ++) {
+  for ( i = 0; i < cmd_cpt ; i ++) {
     pr_info ("nom : %s \n", command_list[i].nom);
     sprintf(str, "%d", i);
     strcat (retour, str);
@@ -122,7 +121,6 @@ static void  io_list (struct work_struct *work) {
     }
     strcat (retour, "\n");
   }
-    strcat (retour, "\n\0");
 
     wu->retour = retour;
     flag = 1;
@@ -192,12 +190,13 @@ static void  io_kill (struct work_struct *work) {
 
 /* afficher l'etat de la memoire */
 static void  io_meminfo (struct work_struct *work) {
-//static char * io_meminfo (void) {
-  
 
+  struct work_user *wu;
   struct sysinfo i;
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   char str[15];
+
+  wu = container_of(work, struct work_user, wk_ws);
   
   si_meminfo(&i);
   // rajouter si_swapinfo(&i);
@@ -238,23 +237,28 @@ static void  io_meminfo (struct work_struct *work) {
   strcat (retour, str);
   strcat(retour, "\n");	  
 
+  wu->retour = retour;
+  flag = 1;
+  wake_up(&cond_wait_queue);
+
   return;	  
-  //  return retour;
+
 }
 
 /* afficher l'etat de la memoire */
 static void  io_modinfo (struct work_struct *work) {
-//static char * io_modinfo (int val) {
-  // a retirer
-  int val = 0;
 
+  
+  struct work_user *wu;
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   // faire find_mod
   struct module * mod;
   int i = 0;
   char str[15];
-    
-  mod = find_module (command_list[val-1].param[0]);
+
+  wu = container_of(work, struct work_user, wk_ws);
+  
+  mod = find_module (wu->param[0]);
 
   if (mod != NULL) {
     strcat (retour, "version " );
@@ -289,9 +293,14 @@ static void  io_modinfo (struct work_struct *work) {
     strcat (retour, "module inexistant\n");
   }
 
+  wu->retour = retour;
+  flag = 1;
+  wake_up(&cond_wait_queue);
+
+  
   pr_info ("fini modinfo\n");
   return;
-  //  return retour;
+
 }
   
 
@@ -390,6 +399,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case LIST_IO :
     pr_info ("into list ioctl");
     cmd_cpt ++;
+    flag = 0;
     INIT_WORK(&(wk->wk_ws), io_list);
     schedule_work(&(wk->wk_ws));
     //queue_work(work_station, &(wk->wk_ws));
@@ -410,6 +420,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case KILL_IOR :
     pr_info ("into kill ioctl");
     cmd_cpt ++;
+    flag = 0;
     INIT_WORK(&(wk->wk_ws), io_kill);
     schedule_work(&(wk->wk_ws));
     pr_info ("avant wait");
@@ -430,6 +441,12 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MEMINFO_IO :
     pr_info ("into meminfo ioctl");
     cmd_cpt ++;
+    flag = 0;
+    INIT_WORK(&(wk->wk_ws), io_meminfo);
+    schedule_work(&(wk->wk_ws));
+    pr_info ("avant wait");
+    wait_event(cond_wait_queue, flag != 0);
+    pr_info ("apres wait");
     //retour = io_meminfo();
     cmd_cpt --;
 
@@ -438,6 +455,12 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MODINFO_IOR :
     pr_info ("into modinfo ioctl");
     cmd_cpt ++;
+    flag = 0;
+    INIT_WORK(&(wk->wk_ws), io_modinfo);
+    schedule_work(&(wk->wk_ws));
+    pr_info ("avant wait");
+    wait_event(cond_wait_queue, flag != 0);
+    pr_info ("apres wait");
     //retour = io_modinfo(cmd_cpt);
     cmd_cpt --;
 
