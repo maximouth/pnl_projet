@@ -136,9 +136,6 @@ static void  io_list (struct work_struct *work) {
 
 /* envoyer un signal à un processus */
 static void  io_kill (struct work_struct *work) {
-//static char * io_kill (int val) {
-  // 
-  int val = 0;
   
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   //faire find_mod
@@ -147,6 +144,10 @@ static void  io_kill (struct work_struct *work) {
   long rr;
   //char str[15];
   struct pid* pid;
+  struct work_user *wu;
+
+  wu = container_of(work, struct work_user, wk_ws);
+
   
   //  mod = find_module (command_list[val-1].param[0]);
 
@@ -156,35 +157,36 @@ static void  io_kill (struct work_struct *work) {
   /* } */
 
   /* get pid struct */
-  res_pid = kstrtol (command_list[val-1].param[1], 10, &rr);
+  res_pid = kstrtol (wu->param[1], 10, &rr);
 
-  pr_info ("commande pid : %s\n", command_list[val-1].param[1]);
+  pr_info ("commande pid : %s\n", wu->param[1]);
   pr_info ("res pid : %d, rr : %ld\n", res_pid, rr);
   
   pid = find_vpid( rr );
 
   /* get signal number */
-  res_pid = kstrtol (command_list[val-1].param[0], 10, &rr);
+  res_pid = kstrtol (wu->param[0], 10, &rr);
 
-  pr_info ("signal: %s\n", command_list[val-1].param[0]);
+  pr_info ("signal: %s\n", wu->param[0]);
   pr_info ("res signal : %d, rr : %ld\n", res_pid, rr);
 
   if (pid == NULL) {
     strcat (retour, "No such active pid\n");
-    return;
-    //return retour;
   }
   
-  if (kill_pid (pid, rr, 1) == 0) {
+  else if (kill_pid (pid, rr, 1) == 0) {
     strcat (retour, "kill succed\n");
-    return;
-    //    return retour;
   }
 
-  strcat (retour, "kill failed\n");
+  else {
+    strcat (retour, "kill failed\n");
+  }
+
+  wu->retour = retour;
+  flag = 1;
+  wake_up(&cond_wait_queue);
 
   return;
-  //  return retour;
 }
 
 
@@ -408,6 +410,12 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case KILL_IOR :
     pr_info ("into kill ioctl");
     cmd_cpt ++;
+    INIT_WORK(&(wk->wk_ws), io_kill);
+    schedule_work(&(wk->wk_ws));
+    pr_info ("avant wait");
+    wait_event(cond_wait_queue, flag != 0);
+    pr_info ("apres wait");
+    flag = 0;
     //    retour = io_kill(cmd_cpt);
     cmd_cpt --;
 
