@@ -221,7 +221,16 @@ int main (int argc, char ** argv) {
 
     printf ("asynchrone : %d\n", commande.asynchrone);
     ioctl (module_fd, req, &commande);
-    printf ("%s", commande.retour);
+
+    if (commande.asynchrone == 0) {
+	while (commande.retour[0] == '\0') {
+	  sleep(1);
+	  printf ("dans le while \n");
+	}
+    }
+    printf ("while fini \n");
+    fflush (stdin);
+    printf ("retour : %s", commande.retour);
     if (commande.retour != NULL) {
       free (commande.retour);
     }

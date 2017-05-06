@@ -15,7 +15,7 @@ struct commande {
 #define FG_IOR      11
 #define KILL_IOR    12
 #define WAIT_IOR    13
-#define MEMINFO_IO 14
+#define MEMINFO_IO  14
 #define MODINFO_IOR 15
 
 

@@ -1,4 +1,8 @@
 /* linux definition */
+#include <linux/workqueue.h>
+#include <linux/sched.h>
+#include <linux/device.h>
+#include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -59,11 +63,29 @@ MODULE_PARM_DESC (PORT_LED1, "num de port de la led 1");
 static struct commande *command_list;
 static int cmd_cpt;
 
-/**** Workqueue declaration
+/**** Workqueue declaration *****/
+
+struct signal_s {
+  int pid;
+  int sig;
+};
+
+struct work_user {
+  struct work_struct wk_ws;
+  struct signal_s signal;
+  char ** param;
+  char * retour;
+};
+
+static int flag = 0;
+
+static struct workqueue_struct *work_station;
+
+DECLARE_WAIT_QUEUE_HEAD(cond_wait_queue);
 
 
 
- ****/
+/**** END Workqueue declaration *****/
 
 
 /***********************************************************************
@@ -72,11 +94,17 @@ static int cmd_cpt;
  **********************************************************************/
 
 /* parcourrir les diffentes commandes utilisées  */
-static char * io_list (int max) {
+static void  io_list (struct work_struct *work) {
+//static char * io_list (int max) {
+  // virer max avant dans les param
+  int max = 2;
   int i,y = 0;
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   char str[15];
+  struct work_user *wu;
 
+  wu = container_of(work, struct work_user, wk_ws);
+  
   strcat (retour, "id|command\n");
   
   for ( i = 0; i < max ; i ++) {
@@ -87,7 +115,7 @@ static char * io_list (int max) {
     strcat (retour, command_list[i].nom);
     strcat (retour, " ");
     while ( (command_list[i].param[y] != NULL) && (y < 10)) {
-      pr_info ("param %d : %s \n", y, command_list[i].param[y]);
+      pr_info ("param %d : %s \n", y, wu->param[y]);
       strcat (retour, command_list[i].param[y]);
       strcat (retour, " ");
       y++;
@@ -95,11 +123,23 @@ static char * io_list (int max) {
     strcat (retour, "\n");
   }
     strcat (retour, "\n\0");
-  return retour;
+
+    wu->retour = retour;
+    flag = 1;
+    wake_up(&cond_wait_queue);
+	
+    pr_info ("retour : %s \n", wu->retour);
+    //copy_to_user (&wu->retour, retour, strlen (retour));
+    //  return retour;
+    return;
 }
 
 /* envoyer un signal à un processus */
-static char * io_kill (int val) {
+static void  io_kill (struct work_struct *work) {
+//static char * io_kill (int val) {
+  // 
+  int val = 0;
+  
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   //faire find_mod
   //struct module * mod;
@@ -131,22 +171,28 @@ static char * io_kill (int val) {
 
   if (pid == NULL) {
     strcat (retour, "No such active pid\n");
-    return retour;
+    return;
+    //return retour;
   }
   
   if (kill_pid (pid, rr, 1) == 0) {
     strcat (retour, "kill succed\n");
-    return retour;
+    return;
+    //    return retour;
   }
 
   strcat (retour, "kill failed\n");
-  
-  return retour;
+
+  return;
+  //  return retour;
 }
 
 
 /* afficher l'etat de la memoire */
-static char * io_meminfo (void) {
+static void  io_meminfo (struct work_struct *work) {
+//static char * io_meminfo (void) {
+  
+
   struct sysinfo i;
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   char str[15];
@@ -189,12 +235,17 @@ static char * io_meminfo (void) {
   sprintf(str, "%ld", i.freeram - i.freehigh);
   strcat (retour, str);
   strcat(retour, "\n");	  
-	  
-  return retour;
+
+  return;	  
+  //  return retour;
 }
 
 /* afficher l'etat de la memoire */
-static char * io_modinfo (int val) {
+static void  io_modinfo (struct work_struct *work) {
+//static char * io_modinfo (int val) {
+  // a retirer
+  int val = 0;
+
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   // faire find_mod
   struct module * mod;
@@ -237,7 +288,8 @@ static char * io_modinfo (int val) {
   }
 
   pr_info ("fini modinfo\n");
-  return retour;
+  return;
+  //  return retour;
 }
   
 
@@ -257,7 +309,8 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   struct commande* args = (struct commande *) param;
   struct commande args_cpy;
   int i = 0;
-
+  struct work_user *wk;
+  
   pr_info ("nom %s \n" , args->nom);
   i = 0;
   
@@ -297,7 +350,23 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
     i++;
   }
 
+  /*****For workqueue */
 
+  wk = kmalloc(sizeof(struct work_user), GFP_KERNEL);
+
+  wk->param = kmalloc(10 * sizeof(char *), GFP_KERNEL);
+
+  for ( i = 0 ; i < 10; i ++) {
+    wk->param[i] = kmalloc(10 * sizeof(char), GFP_KERNEL);
+  }
+
+  wk->retour = kmalloc(1024 * sizeof(char), GFP_KERNEL);
+
+  wk->retour[0] = '\0';
+  
+  /***  **/
+
+  
   
   strcpy (command_list[cmd_cpt].nom , args->nom);
   i = 0;
@@ -306,6 +375,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   while (i < 10) {
     if (args->param[i] != NULL) { 
       strcpy (command_list[cmd_cpt].param[i] , args->param[i]);
+      strcpy (wk->param[i] , args->param[i]);
     }
     pr_info ("remplissage arg %d : %s\n", i, command_list[cmd_cpt].param[i] );
     i ++;
@@ -318,7 +388,14 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case LIST_IO :
     pr_info ("into list ioctl");
     cmd_cpt ++;
-    retour = io_list (cmd_cpt);
+    INIT_WORK(&(wk->wk_ws), io_list);
+    schedule_work(&(wk->wk_ws));
+    //queue_work(work_station, &(wk->wk_ws));
+    //retour = io_list (cmd_cpt);
+    pr_info ("avant wait");
+    wait_event(cond_wait_queue, flag != 0);
+    pr_info ("apres wait");
+    flag = 0;
     cmd_cpt --;
     break;
 
@@ -331,7 +408,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case KILL_IOR :
     pr_info ("into kill ioctl");
     cmd_cpt ++;
-    retour = io_kill(cmd_cpt);
+    //    retour = io_kill(cmd_cpt);
     cmd_cpt --;
 
     break;
@@ -345,7 +422,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MEMINFO_IO :
     pr_info ("into meminfo ioctl");
     cmd_cpt ++;
-    retour = io_meminfo();
+    //retour = io_meminfo();
     cmd_cpt --;
 
     break;
@@ -353,7 +430,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case MODINFO_IOR :
     pr_info ("into modinfo ioctl");
     cmd_cpt ++;
-    retour = io_modinfo(cmd_cpt);
+    //retour = io_modinfo(cmd_cpt);
     cmd_cpt --;
 
     break;
@@ -363,8 +440,13 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   }
 
   /* return copy value to the user  */
+  //  wk->retour = "eeee";
+  /* while (wk->retour[0] == '\0') { */
+  /*   //pr_info ("dans le while \n"); */
+  /* } */
+
   
-  copy_to_user (args->retour, retour, strlen (retour));
+  copy_to_user (args->retour, wk->retour, strlen (wk->retour));
   kfree (retour);
   pr_info ("RETOUR %s", retour);
   return 0;
@@ -405,6 +487,12 @@ static int __init mon_module_init(void) {
       
   }
   
+  work_station = create_workqueue("worker");
+
+  if (work_station == NULL) {
+    pr_alert("Workqueue creation failed in init");
+    return -1;
+  }
   
     return 0;
 }
@@ -427,6 +515,7 @@ static void __exit mon_module_cleanup(void) {
   kfree (command_list);
   pr_info("free des structures\n");
  
+  destroy_workqueue(work_station);
   
   pr_info("au revoir toi..!\n");
   
