@@ -64,6 +64,7 @@ static struct commande *command_list;
 static int cmd_cpt;
 
 static int flags[10];
+static char* retour_async;
 
 /**** Workqueue declaration *****/
 
@@ -108,6 +109,8 @@ static void  io_list (struct work_struct *work) {
   
   wu = container_of(work, struct work_user, wk_ws);
 
+  retour_async = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+  
   if ( wu->async == 1) {
     cpy= cmd_cpt - 1;
     pr_info ("cpy : %d\n", cpy);
@@ -139,6 +142,7 @@ static void  io_list (struct work_struct *work) {
   }
 
     wu->retour = retour;
+    retour_async = retour;
     flag = 1;
     wake_up(&cond_wait_queue);
 	
@@ -167,6 +171,7 @@ static void  io_fg (struct work_struct *work) {
     flags[id] = 1;
     wake_up(&cond_wait_queue);
     wait_event (cond_wait_queue, flag != 0);
+    wu->retour = retour_async;
   }
 
 
