@@ -75,3 +75,5 @@ gestion plus propre de commande list pour list :
   0 1 2 3 et que l'on reveil le 0 1 ou 2 sans reveiller on perd le 3 quand on fait un list...
 
 retirer des traces qui sont inutile et pourrissent l'utilisation, comme dans le main.c (utilisateur)
+
+lui faire passer le checkpath
