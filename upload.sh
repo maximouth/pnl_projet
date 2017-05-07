@@ -14,6 +14,7 @@ cp our_mod.h  vm_root/projet/
 cp main.c     vm_root/projet/
 cp init.sh    vm_root/
 cp toto.c     vm_root/projet/
+cp sleep.c    vm_root/projet/
 
 sync
 

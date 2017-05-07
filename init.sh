@@ -13,6 +13,11 @@ gcc toto.c
 
 ./a.out &
 
+gcc -o sleep sleep.c
+
+./sleep &
+
+
 ps
 
 ./Projet.x /dev/hello
