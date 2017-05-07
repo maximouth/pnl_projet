@@ -57,4 +57,21 @@ ajout de copy_from_user pour recuperer toute la structure pas juste la coquille
 manque des kmalloc de partout, je veux bien de l'aide dessus X)
 
 Reste plein de debug a faire je suppose si tu veux t'amuser à essayder de comprendre XD surtout du coté module pour le debug, la partie user est bonne.
-Manque juste la gestion du '&' mais on verra ca unefois le module debugge bien comme il faut 
+Manque juste la gestion du '&' mais on verra ca unefois le module debugge bien comme il faut
+
+*************************
+07/05/2017
+*************************
+
+Rajouter les kfree pour tout les kmalloc fait!
+surement faire le kmalloc de retour_async dans le init et le kfree dans le exit, ca évite d'avoir plein de kmalloc qui servent à rien
+
+Tester dans fg si on essaye de reveiller fg
+(si cmd_cpt = 1 -> juste fg donc renvoyer mauvais id)
+si id = cmd_cpt -> on demande de se reveiller soi, ca bloque faire pareil qu'au dessus.
+
+gestion plus propre de commande list pour list :
+  si on a 4 processus
+  0 1 2 3 et que l'on reveil le 0 1 ou 2 sans reveiller on perd le 3 quand on fait un list...
+
+retirer des traces qui sont inutile et pourrissent l'utilisation, comme dans le main.c (utilisateur)

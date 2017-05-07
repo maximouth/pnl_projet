@@ -109,9 +109,8 @@ static void  io_list (struct work_struct *work) {
   
   wu = container_of(work, struct work_user, wk_ws);
 
-  retour_async = kmalloc (1024 * sizeof (char), GFP_KERNEL);
-  
   if ( wu->async == 1) {
+    retour_async = kmalloc (1024 * sizeof (char), GFP_KERNEL);
     cpy= cmd_cpt - 1;
     pr_info ("cpy : %d\n", cpy);
     flags[cpy] = 0;
@@ -141,15 +140,19 @@ static void  io_list (struct work_struct *work) {
     strcat (retour, "\n");
   }
 
-    wu->retour = retour;
+  if ( wu->async == 1) {
     retour_async = retour;
-    flag = 1;
-    wake_up(&cond_wait_queue);
+  }
+  else {  
+    wu->retour = retour;
+  }
+  flag = 1;
+  wake_up(&cond_wait_queue);
 	
-    pr_info ("retour : %s \n", wu->retour);
-    //copy_to_user (&wu->retour, retour, strlen (retour));
-    //  return retour;
-    return;
+  pr_info ("retour : %s \n", wu->retour);
+  //copy_to_user (&wu->retour, retour, strlen (retour));
+  //  return retour;
+  return;
 }
 
 /* reveiller un processus */
@@ -162,7 +165,7 @@ static void  io_fg (struct work_struct *work) {
   wu = container_of(work, struct work_user, wk_ws);
 
   kstrtol (wu->param[0], 10, &id);
-  if ( (id > 10) || (id < 0)) {
+  if ( (id > 10) || (id < 0))  {
     retour = "wrong id";
     wu->retour = retour;
   }
@@ -174,15 +177,117 @@ static void  io_fg (struct work_struct *work) {
     wu->retour = retour_async;
   }
 
-
-  
-
   //  flag = 1;
   //wake_up(&cond_wait_queue);
   
   return;
 }
 
+
+/* attend la fin d'un des pid en argument  */
+static void  io_wait (struct work_struct *work) {
+
+  char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+  struct work_user *wu;
+  int cpy;
+  struct pid ** tab;
+  struct task_struct ** pid_list;
+  int i = 0, tmp = 0, quit = 0;
+  long int rr;
+  
+  wu = container_of(work, struct work_user, wk_ws);
+
+  pr_info("dans le wait\n");
+  if ( wu->async == 1) {
+    retour_async = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+    cpy= cmd_cpt - 1;
+    pr_info ("cpy : %d\n", cpy);
+    flags[cpy] = 0;
+    flag = 1;
+    cmd_cpt++;
+    wake_up(&cond_wait_queue);    
+    wait_event_interruptible (cond_wait_queue, flags[cpy] != 0);
+    flags[cpy] = 0;
+  }
+
+  pr_info("dans le wait apres if\n");
+  
+  tab = kmalloc (10 * sizeof (struct pid*), GFP_KERNEL);
+  pid_list = kmalloc (10 * sizeof (struct task_struct *), GFP_KERNEL);
+  
+  for ( i = 0 ; i < 10 ; i++) {
+    tab[i] =  kmalloc (sizeof (struct pid), GFP_KERNEL);
+    pid_list[i] =  kmalloc (sizeof (struct task_struct), GFP_KERNEL);
+  }
+
+  pr_info("dans le wait struc init \n");
+
+  i = 0;
+  
+  // fetch all the pid structure
+  while ( (wu->param[i][0] != '\0') && (i < 10) ) {
+    pr_info ("dans le while %d" , i);
+    if (wu->param[i] != NULL) {
+      kstrtol (wu->param[i], 10, &rr);
+      tab[i] = find_vpid(rr);
+    }
+    i++;
+    tmp = i;
+  }
+
+  pr_info("remplissage pid fait \n");
+  
+  //wait until one of them is no longer alive
+  while (1) {
+
+  pr_info("dans le while \n");
+  
+    for (i = 0; i < tmp ; i++) {
+
+      if (tab[i] != NULL) {
+	pid_list[i] = get_pid_task(tab[i], PIDTYPE_PID);
+      }
+
+      if (pid_list[i] != NULL) {
+	if (!pid_alive(pid_list[i])) {
+	  quit = 1;
+	  pr_info ( "pid : %s dead", wu->param[i] );
+	}
+	pr_info ( "pid : %s alive", wu->param[i] );
+      }
+    }
+    if ( (quit == 1) || (tmp == 0) ) {
+      retour = "one of process is dead\n";
+      if ( wu->async == 1) {
+	retour_async = retour;
+      }
+      else {  
+	wu->retour = retour;
+      }
+      flag = 1;
+      wake_up(&cond_wait_queue);
+	
+      pr_info ("retour : %s \n", wu->retour);
+      //copy_to_user (&wu->retour, retour, strlen (retour));
+      //  return retour;
+      return;
+    }
+
+  }
+  
+  /**************
+      TODO
+
+    charger tout les pids avec get_pid_task
+    tester si ils marchent
+    while (1)
+      si un retour de pid_alive sur les pid retourner
+
+
+  ***************/
+
+
+}
 
 /* envoyer un signal à un processus */
 static void  io_kill (struct work_struct *work) {
@@ -195,8 +300,20 @@ static void  io_kill (struct work_struct *work) {
   //char str[15];
   struct pid* pid;
   struct work_user *wu;
-
+  int cpy;
   wu = container_of(work, struct work_user, wk_ws);
+
+  if ( wu->async == 1) {
+    retour_async = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+    cpy= cmd_cpt - 1;
+    pr_info ("cpy : %d\n", cpy);
+    flags[cpy] = 0;
+    flag = 1;
+    cmd_cpt++;
+    wake_up(&cond_wait_queue);    
+    wait_event_interruptible (cond_wait_queue, flags[cpy] != 0);
+    flags[cpy] = 0;
+  }
 
   
   //  mod = find_module (command_list[val-1].param[0]);
@@ -232,7 +349,14 @@ static void  io_kill (struct work_struct *work) {
     strcat (retour, "kill failed\n");
   }
 
-  wu->retour = retour;
+
+  if ( wu->async == 1) {
+    retour_async = retour;
+  }
+  else {  
+    wu->retour = retour;
+  }
+
   flag = 1;
   wake_up(&cond_wait_queue);
 
@@ -247,8 +371,22 @@ static void  io_meminfo (struct work_struct *work) {
   struct sysinfo i;
   char *retour = kmalloc (1024 * sizeof (char), GFP_KERNEL);
   char str[15];
-
+  int cpy;
+  
   wu = container_of(work, struct work_user, wk_ws);
+
+  if ( wu->async == 1) {
+    retour_async = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+    cpy= cmd_cpt - 1;
+    pr_info ("cpy : %d\n", cpy);
+    flags[cpy] = 0;
+    flag = 1;
+    cmd_cpt++;
+    wake_up(&cond_wait_queue);    
+    wait_event_interruptible (cond_wait_queue, flags[cpy] != 0);
+    flags[cpy] = 0;
+  }
+
   
   si_meminfo(&i);
   // rajouter si_swapinfo(&i);
@@ -289,7 +427,12 @@ static void  io_meminfo (struct work_struct *work) {
   strcat (retour, str);
   strcat(retour, "\n");	  
 
-  wu->retour = retour;
+  if ( wu->async == 1) {
+    retour_async = retour;
+  }
+  else {  
+    wu->retour = retour;
+  }
   flag = 1;
   wake_up(&cond_wait_queue);
 
@@ -307,8 +450,21 @@ static void  io_modinfo (struct work_struct *work) {
   struct module * mod;
   int i = 0;
   char str[15];
-
+  int cpy;
+  
   wu = container_of(work, struct work_user, wk_ws);
+
+  if ( wu->async == 1) {
+    retour_async = kmalloc (1024 * sizeof (char), GFP_KERNEL);
+    cpy= cmd_cpt - 1;
+    pr_info ("cpy : %d\n", cpy);
+    flags[cpy] = 0;
+    flag = 1;
+    cmd_cpt++;
+    wake_up(&cond_wait_queue);    
+    wait_event_interruptible (cond_wait_queue, flags[cpy] != 0);
+    flags[cpy] = 0;
+  }
   
   mod = find_module (wu->param[0]);
 
@@ -345,7 +501,14 @@ static void  io_modinfo (struct work_struct *work) {
     strcat (retour, "module inexistant\n");
   }
 
-  wu->retour = retour;
+
+  if ( wu->async == 1) {
+    retour_async = retour;
+  }
+  else {  
+    wu->retour = retour;
+  }
+
   flag = 1;
   wake_up(&cond_wait_queue);
 
@@ -504,6 +667,16 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param) 
   case WAIT_IOR :
     pr_info ("into wait ioctl");
     cmd_cpt ++;
+
+    flag = 0;
+    INIT_WORK(&(wk->wk_ws), io_wait);
+    schedule_work(&(wk->wk_ws));
+    pr_info ("avant wait");
+    wait_event(cond_wait_queue, flag != 0);
+    pr_info ("apres wait");
+    flag = 0;
+    
+    cmd_cpt --;
 
     break;
 
