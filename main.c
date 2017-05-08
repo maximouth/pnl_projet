@@ -225,7 +225,7 @@ int main (int argc, char ** argv) {
       return 0;
     }
 
-    printf ("asynchrone : %d\n", commande.asynchrone);
+    //    printf ("asynchrone : %d\n", commande.asynchrone);
     ioctl (module_fd, req, &commande);
 
     if (commande.asynchrone == 0) {
@@ -234,9 +234,9 @@ int main (int argc, char ** argv) {
 	  printf ("dans le while \n");
 	}
     }
-    printf ("while fini \n");
+    //    printf ("while fini \n");
     fflush (stdin);
-    printf ("retour : %s", commande.retour);
+    printf ("%s", commande.retour);
     if (commande.retour != NULL) {
       free (commande.retour);
     }
