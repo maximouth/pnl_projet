@@ -403,7 +403,7 @@ Notre fonction ``device_ioctl`` est appelée pour chaque appel à **ioctl**.
 | vers les adresses adressables côté kernel grâce à la fonction ``copy_from_user``. Nous
 | ramenons du côté kernel chaque partie de la structure.
 |
-| Avec les valeurs récupérées nous les copions dans notre structure ``work_user`` *(voir gestion workqueue)*
+| nous copions les valeurs récupérées dans notre structure ``work_user`` *(voir gestion workqueue)*
 | afin de pouvoir les utiliser dans les différentes fonctions définies dans la suite du document.
 |
 | Nous entrons ensuite dans un switch qui appelle la fonction correspondante au numéro
@@ -428,7 +428,7 @@ List
 | *command_list* est une variable globale définie comme un tableau appartenant à  ``struct commande``.
 | Le compteur global *cmd_cpt* permet de connaître le nombre de commande en cours de traitement à un instant donné.
 |
-| A chaque demande d'analyse d'une commande par l'utilisateur, nous incrémentons le compteur et remplissons la première case libre du tableau avec les informations fournies par la structure ``commande``.
+| A chaque demande d'analyse d'une commande par l'utilisateur, nous incrémentons le compteur et remplissons la première case libre du tableau avec les informations fournies par la ``structure commande``.
 | 
 .. code:: c
 
@@ -444,8 +444,7 @@ List
 
 | Une fois la commande traitée nous décrémentons le compteur.
 | 
-| Pour afficher la commande s'exécutant à un moment donné, nous parcourons simplement le tableau jusqu'à la case numéro *cpt_cmd-1* qui correspond à la position de la commande recherchée, en affichant le numéro
-| **ID** de la tache et le **nom** de cette tâche.
+| Pour afficher la commande s'exécutant à un moment donné, nous parcourons simplement le tableau jusqu'à la case numéro *cpt_cmd-1* qui correspond à la position de la commande recherchée, en affichant le numéro  **ID** de la tache et le **nom** de cette tâche.
 
 .. image:: list.png
    :scale: 50 %
@@ -581,7 +580,7 @@ Gestion synchrone/asynchrone
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 |
-| Nous allons maintenant vous expliquer la gestion des fonctions synchrones et asynchrones de
+| Nous allons maintenant expliquer la gestion des fonctions synchrones et asynchrones de
 | notre projet. Comme expliqué précédemment nous créons notre workqueue lors de
 | l'initialisation de notre module.
 |

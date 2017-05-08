@@ -45,6 +45,17 @@ MODULE_AUTHOR("AySi, 2017");
 MODULE_DESCRIPTION("Module bash en ioctl");
 MODULE_VERSION("1.0");
 
+static int PORT_LED0;
+static int PORT_LED1;
+
+module_param (PORT_LED0, int, 0);
+MODULE_PARM_DESC (PORT_LED0, "num de port de la led 0");
+
+module_param (PORT_LED1, int, 0);
+MODULE_PARM_DESC (PORT_LED1, "num de port de la led 1");
+
+
+
 /****************************************/
 /***** Global variables declaration *****/
 
@@ -521,7 +532,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case FG_IO:
+	case FG_IOR:
 		pr_info("into fg ioctl");
 		cmd_cpt++;
 
@@ -535,7 +546,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case KILL_IO:
+	case KILL_IOR:
 		pr_info("into kill ioctl");
 		cmd_cpt++;
 
@@ -549,7 +560,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case WAIT_IO:
+	case WAIT_IOR:
 		pr_info("into wait ioctl");
 		cmd_cpt++;
 
@@ -577,7 +588,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case MODINFO_IO:
+	case MODINFO_IOR:
 		pr_info("into modinfo ioctl");
 		cmd_cpt++;
 
