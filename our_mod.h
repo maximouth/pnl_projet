@@ -10,10 +10,10 @@ struct commande {
 
 /* ioctl request  */
 #define LIST_IO	    10
-#define FG_IO	    11
-#define KILL_IO    12
-#define WAIT_IO    13
+#define FG_IOR	    11
+#define KILL_IOR    12
+#define WAIT_IOR    13
 #define MEMINFO_IO  14
-#define MODINFO_IO 15
+#define MODINFO_IOR 15
 
 #endif

@@ -521,7 +521,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case FG_IO:
+	case FG_IOR:
 		pr_info("into fg ioctl");
 		cmd_cpt++;
 
@@ -535,7 +535,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case KILL_IO:
+	case KILL_IOR:
 		pr_info("into kill ioctl");
 		cmd_cpt++;
 
@@ -549,7 +549,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case WAIT_IO:
+	case WAIT_IOR:
 		pr_info("into wait ioctl");
 		cmd_cpt++;
 
@@ -577,7 +577,7 @@ long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 		cmd_cpt--;
 		break;
 
-	case MODINFO_IO:
+	case MODINFO_IOR:
 		pr_info("into modinfo ioctl");
 		cmd_cpt++;
 
