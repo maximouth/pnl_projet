@@ -41,23 +41,12 @@
 #include "our_mod.h"
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("NOUS, 2017");
+MODULE_AUTHOR("AySi, 2017");
 MODULE_DESCRIPTION("Module bash en ioctl");
 MODULE_VERSION("1.0");
 
-/*
- * static int PORT_LED0;
- * static int PORT_LED1;
- *
- * module_param (PORT_LED0, int, 0);
- * MODULE_PARM_DESC (PORT_LED0, "num de port de la led 0");
- * module_param (PORT_LED1, int, 0);
- * MODULE_PARM_DESC (PORT_LED1, "num de port de la led 1");
- *
- * EXAMPLE of module PARAM
- * module_param (PORT_LED0, int, 0);
- * MODULE_PARM_DESC (PORT_LED0, "num de port de la led 0");
- */
+/****************************************/
+/***** Global variables declaration *****/
 
 static struct commande *command_list;
 static int cmd_cpt;
@@ -65,16 +54,8 @@ static int cmd_cpt;
 static int flags[10];
 static char *retour_async;
 
-/**** Workqueue declaration *****/
-
-struct signal_s {
-	int pid;
-	int sig;
-};
-
 struct work_user {
 	struct work_struct wk_ws;
-	struct signal_s signal;
 	char **param;
 	char *retour;
 	int async;
@@ -86,14 +67,20 @@ static struct workqueue_struct *work_station;
 
 DECLARE_WAIT_QUEUE_HEAD(cond_wait_queue);
 
-/**** END Workqueue declaration *****/
+/***** End global variables declaration *****/
+/********************************************/
 
-/***********************************************************************
- *	 IOCTL fonctions definition
- *
- **********************************************************************/
+/**************************************/
+/***** ioctl functions definition *****/
 
-/* parcourrir les diffentes commandes utilisées	 */
+static void io_list(struct work_struct *work);
+static void io_fg(struct work_struct *work);
+static void io_wait(struct work_struct *work);
+static void io_kill(struct work_struct *work);
+static void io_meminfo(struct work_struct *work);
+static void io_modinfo(struct work_struct *work);
+
+
 static void io_list(struct work_struct *work)
 {
 
@@ -143,14 +130,9 @@ static void io_list(struct work_struct *work)
 	wake_up(&cond_wait_queue);
 
 	pr_info("retour : %s\n", wu->retour);
-	/*
-	 * copy_to_user (&wu->retour, retour, strlen (retour));
-	 * return retour;
-	 */
 
 }
 
-/* reveiller un processus */
 static void io_fg(struct work_struct *work)
 {
 
@@ -172,14 +154,8 @@ static void io_fg(struct work_struct *work)
 		wu->retour = retour_async;
 	}
 
-	/*
-	 * flag = 1;
-	 * wake_up(&cond_wait_queue);
-	 */
-
 }
 
-/* attend la fin d'un des pid en argument	*/
 static void io_wait(struct work_struct *work)
 {
 
@@ -195,7 +171,7 @@ static void io_wait(struct work_struct *work)
 
 	pr_info("dans le wait\n");
 	if (wu->async == 1) {
-		retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL);
+		/* retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL); */
 		cpy = cmd_cpt - 1;
 		pr_info("cpy : %d\n", cpy);
 		flags[cpy] = 0;
@@ -209,13 +185,11 @@ static void io_wait(struct work_struct *work)
 	pr_info("dans le wait apres if\n");
 
 	tab = kmalloc(10 * sizeof(struct pid *), GFP_KERNEL);
-	pid_list = kmalloc(10 * sizeof(struct task_struct *),
-			   GFP_KERNEL);
+	pid_list = kmalloc(10 * sizeof(struct task_struct *), GFP_KERNEL);
 
 	for (i = 0; i < 10; i++) {
 		tab[i] = kmalloc(sizeof(struct pid), GFP_KERNEL);
-		pid_list[i] = kmalloc(sizeof(struct task_struct),
-				      GFP_KERNEL);
+		pid_list[i] = kmalloc(sizeof(struct task_struct), GFP_KERNEL);
 	}
 
 	pr_info("dans le wait struc init\n");
@@ -260,10 +234,15 @@ static void io_wait(struct work_struct *work)
 			pr_info("retour : %s\n", wu->retour);
 		}
 	}
+	for (i = 0; i < 10; i++) {
+		kfree(tab[i]);
+		kfree(pid_list[i]);
+	}
+	kfree(tab);
+	kfree(pid_list);
 
 }
 
-/* envoyer un signal à un processus */
 static void io_kill(struct work_struct *work)
 {
 
@@ -277,7 +256,7 @@ static void io_kill(struct work_struct *work)
 	wu = container_of(work, struct work_user, wk_ws);
 
 	if (wu->async == 1) {
-		retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL);
+		/* retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL); */
 		cpy = cmd_cpt - 1;
 		pr_info("cpy : %d\n", cpy);
 		flags[cpy] = 0;
@@ -318,7 +297,6 @@ static void io_kill(struct work_struct *work)
 
 }
 
-/* afficher l'etat de la memoire */
 static void io_meminfo(struct work_struct *work)
 {
 
@@ -331,7 +309,7 @@ static void io_meminfo(struct work_struct *work)
 	wu = container_of(work, struct work_user, wk_ws);
 
 	if (wu->async == 1) {
-		retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL);
+		/* retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL); */
 		cpy = cmd_cpt - 1;
 		pr_info("cpy : %d\n", cpy);
 		flags[cpy] = 0;
@@ -386,9 +364,9 @@ static void io_meminfo(struct work_struct *work)
 	flag = 1;
 	wake_up(&cond_wait_queue);
 
+
 }
 
-/* afficher l'etat de la memoire */
 static void io_modinfo(struct work_struct *work)
 {
 
@@ -402,7 +380,7 @@ static void io_modinfo(struct work_struct *work)
 	wu = container_of(work, struct work_user, wk_ws);
 
 	if (wu->async == 1) {
-		retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL);
+		/* retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL); */
 		cpy = cmd_cpt - 1;
 		pr_info("cpy : %d\n", cpy);
 		flags[cpy] = 0;
@@ -430,9 +408,6 @@ static void io_modinfo(struct work_struct *work)
 		strcat(retour, str);
 		strcat(retour, " :\n");
 
-		/* reste l'adresse à trouver */
-
-		/* afficher la valeur du parametre aussi */
 		while (i < mod->num_kp) {
 			strcat(retour, "->param ");
 			sprintf(str, "%d", i);
@@ -456,20 +431,16 @@ static void io_modinfo(struct work_struct *work)
 
 	pr_info("fini modinfo\n");
 
+
 }
 
-/***********************************************************************
- *	 END IOCTL fonctions definition
- *
- **********************************************************************/
+/***** End ioctl functions definition *****/
+/******************************************/
 
-/***********************************************************************
- *	 IOCTL syscall
- *
- **********************************************************************/
-long device_ioctl(struct file *filp,
-		  unsigned int request,
-		  unsigned long param)
+/*************************/
+/***** ioctl syscall *****/
+
+long device_ioctl(struct file *filp, unsigned int request, unsigned long param)
 {
 	char *retour = kmalloc(1024 * sizeof(char), GFP_KERNEL);
 	struct commande *args = (struct commande *)param;
@@ -550,7 +521,7 @@ long device_ioctl(struct file *filp,
 		cmd_cpt--;
 		break;
 
-	case FG_IOR:
+	case FG_IO:
 		pr_info("into fg ioctl");
 		cmd_cpt++;
 
@@ -564,7 +535,7 @@ long device_ioctl(struct file *filp,
 		cmd_cpt--;
 		break;
 
-	case KILL_IOR:
+	case KILL_IO:
 		pr_info("into kill ioctl");
 		cmd_cpt++;
 
@@ -578,7 +549,7 @@ long device_ioctl(struct file *filp,
 		cmd_cpt--;
 		break;
 
-	case WAIT_IOR:
+	case WAIT_IO:
 		pr_info("into wait ioctl");
 		cmd_cpt++;
 
@@ -606,7 +577,7 @@ long device_ioctl(struct file *filp,
 		cmd_cpt--;
 		break;
 
-	case MODINFO_IOR:
+	case MODINFO_IO:
 		pr_info("into modinfo ioctl");
 		cmd_cpt++;
 
@@ -625,11 +596,22 @@ long device_ioctl(struct file *filp,
 	}
 
 	copy_to_user(args->retour, wk->retour, strlen(wk->retour));
-	kfree(retour);
 	pr_info("RETOUR %s", retour);
+	kfree(retour);
+	for (i = 0; i < 10; i++)
+		kfree(wk->param[i]);
+	kfree(wk->param);
+	kfree(wk->retour);
+	kfree(wk);
 	return 0;
 
 }
+
+/***** End ioctl syscall *****/
+/*****************************/
+
+/****************************************/
+/***** Device init & exit functions *****/
 
 /* operation of our driver */
 static const struct file_operations fops_mod = {
@@ -638,10 +620,6 @@ static const struct file_operations fops_mod = {
 
 static int major;
 
-/***********************************************************************
- *	 INIT device function
- *
- **********************************************************************/
 static int __init mon_module_init(void)
 {
 	int i = 0, y = 0;
@@ -651,17 +629,17 @@ static int __init mon_module_init(void)
 
 	cmd_cpt = 0;
 
+	retour_async = kmalloc(1024 * sizeof(char), GFP_KERNEL);
 	command_list = kmalloc(10 * sizeof(struct commande), GFP_KERNEL);
 	for (i = 0; i < 10; i++) {
 		command_list[i].nom = kmalloc(10 * sizeof(char), GFP_KERNEL);
 		command_list[i].param =
-			kmalloc(10 * sizeof(char *), GFP_KERNEL);
+		    kmalloc(10 * sizeof(char *), GFP_KERNEL);
 		for (y = 0; y < 10; y++) {
 			command_list[i].param[y] = kmalloc(10 * sizeof(char),
 							   GFP_KERNEL);
 			command_list[i].nom[y] = '\0';
 		}
-		/* pr_info ("structure command list initialise\n"); */
 	}
 
 	work_station = create_workqueue("worker");
@@ -674,28 +652,25 @@ static int __init mon_module_init(void)
 	return 0;
 }
 
-/***********************************************************************
- *	 EXIT device function
- *
- **********************************************************************/
 static void __exit mon_module_cleanup(void)
 {
-	int i = 0;
+	int i = 0, y = 0;
 
-	/* faire free sur la structure commandelist */
 	for (i = 0; i < 10; i++) {
+		for (y = 0; y < 10; y++)
+			kfree(command_list[i].param[y]);
 		kfree(command_list[i].nom);
 		kfree(command_list[i].param);
 	}
+	kfree(retour_async);
 	kfree(command_list);
-	/* pr_info("free des structures\n"); */
-
 	destroy_workqueue(work_station);
-
 	unregister_chrdev(major, "our_mod");
-
 	pr_info("\n****** Suppression module ! ******\n");
 }
 
 module_init(mon_module_init);
 module_exit(mon_module_cleanup);
+
+/***** End device init & exit functions *****/
+/********************************************/
