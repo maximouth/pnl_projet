@@ -15,7 +15,7 @@
 int main (int argc, char ** argv) {
   /* file descriptor stdin */
   int stdin_fd;
-  /* file descriptor for kernet module */
+  /* file descriptor for kerner module */
   int module_fd;
   /* a counter */
   int i = 0, y = 0;
@@ -197,7 +197,7 @@ int main (int argc, char ** argv) {
     }      
 
     /*
-     * call the wright ioctl function
+     * call the right ioctl function
      */
     
     if (strcmp (commande.nom, "fg") == 0 ) {
@@ -217,6 +217,12 @@ int main (int argc, char ** argv) {
     }
     else if (strcmp (commande.nom, "list") == 0 ) {
       req = LIST_IO;
+    }
+    else if (strcmp (commande.nom, "quit") == 0 ||
+	     strcmp (commande.nom, "exit") == 0 ||
+	     strcmp (commande.nom, "q") == 0 ) {
+      printf ("Terminaison du programme !\n");
+      return 0;
     }
 
     printf ("asynchrone : %d\n", commande.asynchrone);
