@@ -176,11 +176,14 @@ init.sh permet de :
 |
 |
 
----------------------------
+
 
 |
 |
 |
+|
+|
+
 
 
 
@@ -301,9 +304,10 @@ L'utilisateur peut entrer les commandes suivantes qui seront traitées par notre 
 | *req* correspond au numéro de la fonction à appeler.
 | *&commande* correspond à l'adresse de la structure commande contenant tous les arguments à
 | passer à la fonction appelée.
+|
+| L'affichage de la chaine de caractères en retour de l'**ioctl**. est ensuite effectué.
 
- L'affichage de la chaine de caractères en retour de l'**ioctl**. est ensuite effectué.
-
+|
 
 V) Module
 =========
@@ -325,7 +329,7 @@ Initialisation
 
 |
 | Dans l'initialisation nous commençons par trouver un numéro majeur à notre module pour qu'il
-| ait une place dans le ``/proc/devices`` ce qui nous permettera de créer un noeud plus tard avec
+| ait une place dans le ``/proc/devices`` ce qui nous permettra de créer un noeud plus tard avec
 | un ``mknod``
 
 .. code :: c
@@ -337,7 +341,7 @@ Initialisation
 | à chaque appel. Pour le projet nous n'avons que **ioctl** qui est représenté.
 
 
-| Pour pouvoir sauvegarder la fonction qui 'exécute à un instant donné, nous avons besoin d'un
+| Pour pouvoir sauvegarder la fonction qui s'exécute à un instant donné, nous avons besoin d'un
 | tableau de ``structure`` ``commande`` *(voir list)*
 
 | Dans l'initialisation nous continuons par allouer de la mémoire kernel avec des kmalloc
@@ -350,7 +354,7 @@ Initialisation
 	  
   work_station = create_workqueue("worker");
 
-| Nous finissons le traitement en vérifiant qu'elle est bien crée et que l'initialisation du module est terminée.
+| Nous finissons le traitement en vérifiant qu'elle est bien créée et que l'initialisation du module est terminée.
 |
 |
 |
@@ -384,7 +388,7 @@ Destruction
 | les fuites mémoire.
 | Nous faisons donc des ``kfree`` pour libérer les ressources allouées à notre structure.
 
-| Nous devons aussi détruire la worqueue crée dans le init.
+| Nous devons aussi détruire la worqueue créée dans le init.
 | 
 |
 |
@@ -424,8 +428,7 @@ List
 | *command_list* est une variable globale définie comme un tableau appartenant à  ``struct commande``.
 | Le compteur global *cmd_cpt* permet de connaître le nombre de commande en cours de traitement à un instant donné.
 |
-| A chaque demande d'analyse d'une commande par l'utilisateur, nous incrémentons le compteur et remplissons la 
-| première case libre du tableau avec les informations fournies par la structure ``commande``.
+| A chaque demande d'analyse d'une commande par l'utilisateur, nous incrémentons le compteur et remplissons la première case libre du tableau avec les informations fournies par la structure ``commande``.
 | 
 .. code:: c
 
@@ -441,8 +444,7 @@ List
 
 | Une fois la commande traitée nous décrémentons le compteur.
 | 
-| Pour afficher la commande s'exécutant à un moment donné, nous parcourons simplement le tableau jusqu'à la 
-| case numéro *cpt_cmd-1* qui correspond à la position de la commande recherchée, en affichant le numéro
+| Pour afficher la commande s'exécutant à un moment donné, nous parcourons simplement le tableau jusqu'à la case numéro *cpt_cmd-1* qui correspond à la position de la commande recherchée, en affichant le numéro
 | **ID** de la tache et le **nom** de cette tâche.
 
 .. image:: list.png
@@ -649,7 +651,7 @@ Gestion synchrone/asynchrone
     flags[cpy] = 0;
   }
 	  
-| Si nous sommes dans l'état asynchrone, nous restons bloqué  jusqu'à ce qu'il y ait un
+| Si nous sommes dans l'état asynchrone, nous restons bloqués  jusqu'à ce qu'il y ait un
 | appel à fg qui passe notre condition à ``vrai``.
 | FG se contente de mettre la valeur contenue dans la bonne case du tableau flags[] à 1 et de faire
 | un ``wakeup`` pour que la fonction réveillée puisse s'exécuter.
